@@ -1,0 +1,21 @@
+table {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+mat-card {
+  margin: 20px;
+}
+
+.admin-gif-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.admin-gif {
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+} 
