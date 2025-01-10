@@ -46,6 +46,25 @@ export class AuthService {
       );
   }
 
+  register(data: { 
+    firstName: string; 
+    lastName: string; 
+    email: string; 
+    password: string; 
+  }): Observable<any> {
+    return this.http.post<{user: User, token: string}>(`${environment.apiUrl}/auth/register`, data)
+      .pipe(
+        map(response => {
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            this.currentUserSubject.next(response.user);
+          }
+          return response;
+        })
+      );
+  }
+
   isLoggedIn(): boolean {
     if (isPlatformBrowser(this.platformId)) {
       const token = localStorage.getItem('token');

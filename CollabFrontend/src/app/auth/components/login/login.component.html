@@ -1,4 +1,4 @@
-<div class="login-container">
+<div class="login-container" style="flex-direction: column;">
     <mat-card>
       <mat-card-header>
         <mat-card-title>Login</mat-card-title>
@@ -32,8 +32,6 @@
               <mat-error>Password must contain uppercase, lowercase, number and special character</mat-error>
             }
           </mat-form-field>
-          <p>Email: admin&#64;example.com</p>
-          <p>Password: Admin123!&#64;#</p>
 
           <button mat-raised-button color="primary" type="submit" 
                   [disabled]="loginForm.invalid || isLoading">
@@ -42,4 +40,10 @@
         </form>
       </mat-card-content>
     </mat-card>
+
+    <br>  
+    <b>Test credentials:</b>
+    <p>Email: admin&#64;example.com, Password: Admin123!&#64;#</p>
+    <p>Email: normal&#64;example.com, Password: Normal123!&#64;#</p>
+    <p>Email: normal2&#64;example.com, Password: Normal123!&#64;#</p>
   </div>

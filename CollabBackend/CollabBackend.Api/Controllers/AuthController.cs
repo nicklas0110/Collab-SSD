@@ -43,12 +43,26 @@ public class AuthController : ControllerBase
     {
         try
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = "Invalid model state", errors = ModelState });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Email) || 
+                string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.FirstName) ||
+                string.IsNullOrWhiteSpace(request.LastName))
+            {
+                return BadRequest(new { message = "All fields are required" });
+            }
+
             var (user, token) = await _authService.RegisterAsync(
                 request.Email, 
                 request.Password,
                 request.FirstName,
                 request.LastName
             );
+
             var userDto = new UserDto(
                 user.Id,
                 user.Email,
@@ -60,9 +74,30 @@ public class AuthController : ControllerBase
             );
             return Ok(new AuthResponseDto(userDto, token));
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            // Log the full exception details
+            Console.WriteLine($"Registration error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                Console.WriteLine($"Inner stack trace: {ex.InnerException.StackTrace}");
+            }
+            
+            return StatusCode(500, new { 
+                message = "An error occurred during registration",
+                error = ex.Message,
+                stackTrace = ex.StackTrace // Only include in development
+            });
         }
     }
 }

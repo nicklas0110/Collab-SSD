@@ -5,9 +5,11 @@ import { ProfileDetailsComponent } from './profile/components/profile-details/pr
 import { MessageListComponent } from './messages/components/message-list/message-list.component';
 import { CollaborationListComponent } from './collaboration/components/collaboration-list/collaboration-list.component';
 import { authGuard } from './auth/guards/auth.guard';
+import { RegisterComponent } from './auth/components/register/register.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [authGuard] },
+  { path: 'register', component: RegisterComponent, canActivate: [authGuard] },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileDetailsComponent, canActivate: [authGuard] },
   { path: 'messages', component: MessageListComponent, canActivate: [authGuard] },

@@ -36,7 +36,7 @@ public static class DbSeeder
             var user2 = new User
             {
                 Id = Guid.NewGuid(),
-                Email = "Normal2@example.com",
+                Email = "normal2@example.com",
                 FirstName = "Normal",
                 LastName = "User2",
                 Role = "user",

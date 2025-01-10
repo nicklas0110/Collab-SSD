@@ -22,6 +22,8 @@ public class AuthService : IAuthService
 
     public async Task<(User user, string token)> LoginAsync(string email, string password)
     {
+        email = email.ToLowerInvariant().Trim();
+        
         var user = await _userRepository.GetByEmailAsync(email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
@@ -34,6 +36,8 @@ public class AuthService : IAuthService
 
     public async Task<(User user, string token)> RegisterAsync(string email, string password, string firstName, string lastName)
     {
+        email = email.ToLowerInvariant().Trim();
+
         if (!await ValidatePasswordAsync(password))
         {
             throw new ArgumentException("Password does not meet requirements");
@@ -67,7 +71,7 @@ public class AuthService : IAuthService
         var hasUpperChar = new Regex(@"[A-Z]+");
         var hasLowerChar = new Regex(@"[a-z]+");
         var hasSymbols = new Regex(@"[!@#$%^&*()_+=\[{\]};:<>|./?,-]");
-        var hasMinLength = password.Length >= 12;
+        var hasMinLength = password.Length >= 8;
 
         return Task.FromResult(
             hasNumber.IsMatch(password) &&

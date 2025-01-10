@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    RouterModule,
     MatButtonModule
   ],
   templateUrl: './login.component.html',
@@ -46,13 +47,18 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
-      
-      this.authService.login(this.loginForm.value).subscribe({
+
+      const loginData = {
+        email: this.loginForm.value.email.toLowerCase().trim(),
+        password: this.loginForm.value.password
+      };
+
+      this.authService.login(loginData).subscribe({
         next: () => {
           this.router.navigate(['/dashboard']);
         },
         error: (error) => {
-          this.errorMessage = error.message || 'An error occurred';
+          this.errorMessage = error.error?.message || error.message || 'Login failed';
           this.isLoading = false;
         }
       });

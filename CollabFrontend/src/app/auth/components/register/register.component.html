@@ -1,1 +1,90 @@
-<p>register works!</p>
+<div class="register-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Register</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name</mat-label>
+          <input matInput formControlName="firstName" #firstName maxlength="20">
+          <mat-hint align="end">{{firstName.value.length}} / 20</mat-hint>
+          @if (registerForm.get('firstName')?.hasError('required') && registerForm.get('firstName')?.touched) {
+            <mat-error>First name is required</mat-error>
+          }
+          @if (registerForm.get('firstName')?.hasError('pattern')) {
+            <mat-error>First name can only contain letters, spaces, and hyphens</mat-error>
+          }
+          @if (registerForm.get('firstName')?.hasError('minlength')) {
+            <mat-error>First name must be at least 2 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last Name</mat-label>
+          <input matInput formControlName="lastName" #lastName maxlength="20">
+          <mat-hint align="end">{{lastName.value.length}} / 20</mat-hint>
+          @if (registerForm.get('lastName')?.hasError('required') && registerForm.get('lastName')?.touched) {
+            <mat-error>Last name is required</mat-error>
+          }
+          @if (registerForm.get('lastName')?.hasError('pattern')) {
+            <mat-error>Last name can only contain letters, spaces, and hyphens</mat-error>
+          }
+          @if (registerForm.get('lastName')?.hasError('minlength')) {
+            <mat-error>Last name must be at least 2 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email">
+          @if (registerForm.get('email')?.hasError('required') && registerForm.get('email')?.touched) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (registerForm.get('email')?.hasError('email')) {
+            <mat-error>Please enter a valid email</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password">
+          @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (registerForm.get('password')?.hasError('pattern')) {
+            <mat-error>Password must contain uppercase, lowercase, number and special character</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm Password</mat-label>
+          <input matInput type="password" formControlName="confirmPassword">
+          @if (registerForm.get('confirmPassword')?.hasError('required') && registerForm.get('confirmPassword')?.touched) {
+            <mat-error>Please confirm your password</mat-error>
+          }
+          @if (registerForm.hasError('mismatch')) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage) {
+          <div class="error-message">{{ errorMessage }}</div>
+        }
+
+        <div class="form-actions">
+          <button mat-stroked-button type="button" routerLink="/login">
+            Back to Login
+          </button>
+          <button mat-raised-button 
+                  color="primary" 
+                  type="submit"
+                  [disabled]="!registerForm.valid || isLoading">
+            {{ isLoading ? 'Registering...' : 'Register' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
