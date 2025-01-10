@@ -110,16 +110,20 @@ public class CollaborationsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCollaboration(Guid id, Collaboration collaboration)
+    public async Task<ActionResult<CollaborationDto>> UpdateCollaboration(Guid id, UpdateCollaborationDto collaboration)
     {
         var userId = _userService.GetCurrentUserId();
         var existing = await _collaborationRepository.GetByIdAsync(id);
-
+        
         if (existing == null)
+        {
             return NotFound();
+        }
 
         if (existing.CreatedById != userId)
+        {
             return Forbid();
+        }
 
         existing.Title = collaboration.Title;
         existing.Description = collaboration.Description;
@@ -128,16 +132,33 @@ public class CollaborationsController : ControllerBase
 
         await _collaborationRepository.UpdateAsync(existing);
 
+        // Create a simplified DTO that doesn't include sensitive user data
+        var participantDtos = existing.Participants.Select(p => new UserDto(
+            p.Id,
+            p.Email,
+            p.FirstName,
+            p.LastName,
+            p.Role,
+            p.CreatedAt,
+            p.UpdatedAt
+        )).ToList();
+
+        var createdByDto = new UserDto(
+            existing.CreatedBy.Id,
+            existing.CreatedBy.Email,
+            existing.CreatedBy.FirstName,
+            existing.CreatedBy.LastName,
+            existing.CreatedBy.Role,
+            existing.CreatedBy.CreatedAt,
+            existing.CreatedBy.UpdatedAt
+        );
+
         return Ok(new CollaborationDto(
             existing.Id,
             existing.Title,
             existing.Description,
-            existing.Participants.Select(p => new UserDto(
-                p.Id, p.Email, p.FirstName, p.LastName, p.Role, p.CreatedAt, p.UpdatedAt)).ToList(),
-            new UserDto(existing.CreatedBy.Id, existing.CreatedBy.Email, 
-                existing.CreatedBy.FirstName, existing.CreatedBy.LastName, 
-                existing.CreatedBy.Role, existing.CreatedBy.CreatedAt, 
-                existing.CreatedBy.UpdatedAt),
+            participantDtos,
+            createdByDto,
             existing.CreatedAt,
             existing.UpdatedAt,
             existing.Status
