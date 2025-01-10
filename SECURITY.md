@@ -34,11 +34,6 @@
 - IP address logging
 - Structured logging with Serilog
 
-## Reporting a Vulnerability
-
-Please report security vulnerabilities by emailing security@yourcompany.com.
-Do not create public GitHub issues for security vulnerabilities.
-
 ## Security Configuration
 
 Ensure these settings in appsettings.json:
