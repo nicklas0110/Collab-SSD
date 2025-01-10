@@ -12,6 +12,7 @@ using CollabBackend.Core.Services;
 namespace CollabBackend.Api.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
 [Authorize]
 public class CollaborationsController : ControllerBase
@@ -107,7 +108,7 @@ public class CollaborationsController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 Title = sanitizedTitle,
-                Description = sanitizedDescription,  // Use the sanitized description or empty string
+                Description = sanitizedDescription,
                 CreatedById = userId,
                 Status = "active",
                 CreatedAt = DateTime.UtcNow,

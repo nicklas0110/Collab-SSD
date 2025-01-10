@@ -11,6 +11,7 @@ using CollabBackend.Core.Services;
 namespace CollabBackend.Api.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
 [Authorize]
 public class MessagesController : ControllerBase

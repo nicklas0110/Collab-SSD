@@ -12,9 +12,17 @@ using CollabBackend.Core.Settings;
 using CollabBackend.Core.Services;
 using Serilog;
 using Serilog.Events;
+using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Http.Features;
+using Serilog.Sinks.Email;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// SERILOG BROKE - TEMPORARILY DISABLED
+/*
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -25,6 +33,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+*/
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -114,6 +123,64 @@ builder.Services.AddCors(options =>
 // Add configuration for CryptoService
 builder.Services.Configure<CryptoSettings>(builder.Configuration.GetSection("Crypto"));
 
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Period = "1m",
+            Limit = 30
+        },
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/auth/login",
+            Period = "5m",
+            Limit = 5
+        },
+        new RateLimitRule
+        {
+            Endpoint = "post:/api/messages",
+            Period = "1m",
+            Limit = 10
+        }
+    };
+});
+
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Add request size limits
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = 8 * 1024 * 1024; // 8MB
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+});
+
 var app = builder.Build();
 
 // Add security headers middleware
@@ -166,5 +233,7 @@ app.UseCors("AllowAngularDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+app.UseIpRateLimiting();
 
 app.Run();
