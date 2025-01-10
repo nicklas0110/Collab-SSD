@@ -20,8 +20,8 @@ jobs:
         project: 'CollabBackend'
         format: 'HTML'
         args: >
-          --scan .
-          --suppression ./.github/suppressions.xml
+          --scan CollabBackend
+          --suppression .github/suppressions.xml
           --failOnCVSS 7
           --enableRetired
 
