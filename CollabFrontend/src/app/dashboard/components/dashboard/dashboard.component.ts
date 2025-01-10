@@ -8,16 +8,19 @@ import { RouterLink } from '@angular/router';
 import { CollaborationService } from '../../../collaboration/services/collaboration.service';
 import { MessageService } from '../../../messages/services/message.service';
 import { map, combineLatest } from 'rxjs';
+import { AuthService } from '../../../auth/services/auth.service';
+import { Router } from '@angular/router';
 
 export interface ActivityItem {
   id: string;
-  type: 'collaboration' | 'message' | 'user';
+  type: 'collaboration' | 'message';
   action: string;
   title: string;
   description: string;
   timestamp: Date;
   icon: string;
-  link?: string;
+  link: string;
+  collaborationId?: string;
 }
 
 @Component({
@@ -39,8 +42,13 @@ export class DashboardComponent implements OnInit {
     map(collabs => collabs.filter(c => c.status === 'active').length)
   );
 
-  unreadMessages$ = this.messageService.getMessages().pipe(
-    map(messages => messages.filter(m => !m.read).length)
+  unreadMessages$ = combineLatest([
+    this.messageService.getMessages(),
+    this.authService.currentUser$
+  ]).pipe(
+    map(([messages, currentUser]) => 
+      messages.filter(m => !m.read && m.senderId !== currentUser?.id).length
+    )
   );
 
   activities$ = combineLatest([
@@ -60,7 +68,7 @@ export class DashboardComponent implements OnInit {
           description: `Created by ${collab.createdBy.firstName} ${collab.createdBy.lastName}`,
           timestamp: new Date(collab.createdAt),
           icon: 'group_add',
-          link: `/collaborations/${collab.id}`
+          link: '/collaborations'
         });
       });
 
@@ -76,20 +84,34 @@ export class DashboardComponent implements OnInit {
             description: `${msg.sender.firstName} ${msg.sender.lastName}: ${msg.content}`,
             timestamp: new Date(msg.createdAt),
             icon: 'message',
-            link: `/messages`
+            link: '/messages',
+            collaborationId: msg.collaborationId
           });
         }
       });
 
-      // Sort by timestamp, newest first
       return activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     })
   );
 
   constructor(
     private collaborationService: CollaborationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit() {}
+
+  navigateToActivity(activity: ActivityItem) {
+    if (activity.type === 'message') {
+      this.router.navigate(['/messages'], { 
+        queryParams: { collaborationId: activity.collaborationId }
+      });
+    } else if (activity.type === 'collaboration') {
+      this.router.navigate(['/collaborations'], { 
+        queryParams: { collaborationId: activity.id }
+      });
+    }
+  }
 } 

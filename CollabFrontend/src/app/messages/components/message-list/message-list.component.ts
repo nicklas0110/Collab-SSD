@@ -8,13 +8,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
+import { ActivatedRoute, Params } from '@angular/router';
 import { MessageService } from '../../services/message.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { CollaborationService } from '../../../collaboration/services/collaboration.service';
-import { BehaviorSubject } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, filter, switchMap, take } from 'rxjs';
+import { Message } from '../../interfaces/message.interface';
 
 @Component({
   selector: 'app-message-list',
@@ -52,9 +51,7 @@ export class MessageListComponent implements OnInit {
   collaborations$ = this.collaborationService.getCollaborations();
   selectedCollaboration: any = null;
   private selectedCollabId = new BehaviorSubject<string | null>(null);
-  messages$ = this.selectedCollabId.pipe(
-    switchMap(id => this.messageService.getMessages(id || undefined))
-  );
+  messages$ = new BehaviorSubject<Message[]>([]);
   newMessage = '';
   currentUser$ = this.authService.currentUser$;
 
@@ -66,13 +63,26 @@ export class MessageListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params: Params) => {
       const collaborationId = params['collaborationId'];
       if (collaborationId) {
         this.collaborationService.getCollaboration(collaborationId).subscribe(
           collab => this.selectCollaboration(collab)
         );
       }
+    });
+
+    this.selectedCollabId.pipe(
+      filter(id => !!id),
+      switchMap(id => this.messageService.getMessages(id!))
+    ).subscribe(messages => {
+      this.messages$.next(messages);
+      // Mark unread messages as read
+      this.currentUser$.pipe(take(1)).subscribe(currentUser => {
+        messages
+          .filter(m => !m.read && m.senderId !== currentUser?.id)
+          .forEach(m => this.markMessageAsRead(m.id));
+      });
     });
   }
 
@@ -87,10 +97,21 @@ export class MessageListComponent implements OnInit {
     this.messageService.sendMessage({
       content: this.newMessage,
       collaborationId: this.selectedCollaboration.id,
-      read: false
+      read: true
     }).subscribe(() => {
       this.newMessage = '';
       this.selectedCollabId.next(this.selectedCollaboration.id);
+    });
+  }
+
+  markMessageAsRead(messageId: string) {
+    this.messageService.markAsRead(messageId).subscribe(updatedMessage => {
+      // Update the messages list with the new read status
+      const currentMessages = this.messages$.getValue();
+      const updatedMessages = currentMessages.map(msg => 
+        msg.id === messageId ? { ...msg, read: true } : msg
+      );
+      this.messages$.next(updatedMessages);
     });
   }
 } 

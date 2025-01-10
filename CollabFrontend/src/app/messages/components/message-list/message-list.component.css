@@ -128,4 +128,38 @@ mat-card-actions {
 
 .active {
   background-color: rgba(0, 0, 0, 0.04);
+}
+
+.unread {
+  background-color: rgba(63, 81, 181, 0.1);
+  font-weight: 500;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.read-status {
+  font-size: 14px;
+  height: 14px;
+  width: 14px;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.read-status.read {
+  color: #2196F3;  /* Material blue color for read messages */
+}
+
+.message-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.unread {
+  background-color: rgba(33, 150, 243, 0.05);  /* Light blue background for unread messages */
 } 

@@ -5,10 +5,8 @@
     </mat-card-header>
     <mat-card-content>
       @for (activity of activities$ | async; track activity.id) {
-        <div class="activity-item" [routerLink]="activity.link">
-          <div class="activity-icon">
-            <mat-icon>{{ activity.icon }}</mat-icon>
-          </div>
+        <div class="activity-item" (click)="navigateToActivity(activity)">
+          <mat-icon class="activity-icon">{{ activity.icon }}</mat-icon>
           <div class="activity-content">
             <h3>{{ activity.title }}</h3>
             <p>{{ activity.description }}</p>
@@ -38,7 +36,7 @@
           <mat-icon>message</mat-icon>
           <div class="stat-content">
             <span class="stat-value">{{ (unreadMessages$ | async) || 0 }}</span>
-            <span class="stat-label">Total Messages</span>
+            <span class="stat-label">Unread Messages</span>
           </div>
         </div>
       </mat-card-content>

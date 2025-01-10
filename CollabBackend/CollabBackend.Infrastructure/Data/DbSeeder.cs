@@ -36,11 +36,11 @@ public static class DbSeeder
             var user2 = new User
             {
                 Id = Guid.NewGuid(),
-                Email = "user2@example.com",
+                Email = "Normal2@example.com",
                 FirstName = "Normal",
                 LastName = "User2",
                 Role = "user",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("User2123!@#"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Normal123!@#"),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };

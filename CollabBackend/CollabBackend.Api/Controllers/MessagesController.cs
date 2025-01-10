@@ -154,14 +154,17 @@ public class MessagesController : ControllerBase
     {
         var userId = _userService.GetCurrentUserId();
         var message = await _messageRepository.GetByIdAsync(id);
-
+        
         if (message == null)
             return NotFound();
 
         if (!await _collaborationRepository.IsUserParticipantAsync(message.CollaborationId, userId))
             return Forbid();
 
-        await _messageRepository.MarkAsReadAsync(id, userId);
+        message.Read = true;
+        message.UpdatedAt = DateTime.UtcNow;
+        
+        await _messageRepository.UpdateAsync(message);
         return NoContent();
     }
 } 
