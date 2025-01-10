@@ -51,6 +51,7 @@ bash
 cd CollabBackend.Api
 8. Run the backend:
 dotnet run --urls="https://localhost:7086/"
+
 The API will be available at:
 - HTTPS: https://localhost:7086
 - Swagger UI: https://localhost:7086/swagger
