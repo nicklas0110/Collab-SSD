@@ -1,0 +1,72 @@
+<div class="messages-container">
+  <div class="sidebar">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>My Collaborations</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-nav-list>
+          @for (collab of collaborations$ | async; track collab.id) {
+            <a mat-list-item 
+               [class.active]="selectedCollaboration?.id === collab.id"
+               (click)="selectCollaboration(collab)">
+              <mat-icon matListItemIcon>group</mat-icon>
+              <span matListItemTitle>{{ collab.title }}</span>
+            </a>
+          }
+        </mat-nav-list>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="chat-container">
+    @if (selectedCollaboration) {
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>{{ selectedCollaboration.title }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="message-list">
+            @for (message of messages$ | async; track message.id) {
+              <div class="message-wrapper" [class.own-message]="message.senderId === (currentUser$ | async)?.id">
+                <div class="message">
+                  <div class="message-content">
+                    <div class="message-header">
+                      <span class="sender-name">{{ message.sender.firstName }} {{ message.sender.lastName }}</span>
+                      <span class="message-time">{{ message.createdAt | date:'short' }}</span>
+                    </div>
+                    <p class="message-text">{{ message.content }}</p>
+                  </div>
+                </div>
+              </div>
+              <mat-divider></mat-divider>
+            } @empty {
+              <div class="empty-state">
+                <mat-icon>message</mat-icon>
+                <p>No messages in this collaboration yet</p>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <mat-form-field class="message-input">
+            <input matInput 
+                   [(ngModel)]="newMessage" 
+                   placeholder="Type a message..."
+                   (keyup.enter)="sendMessage()">
+          </mat-form-field>
+          <button mat-icon-button color="primary" (click)="sendMessage()">
+            <mat-icon>send</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    } @else {
+      <mat-card class="empty-state">
+        <mat-card-content>
+          <mat-icon>chat</mat-icon>
+          <p>Select a collaboration to start chatting</p>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</div> 

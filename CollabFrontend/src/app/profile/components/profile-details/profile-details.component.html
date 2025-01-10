@@ -1,0 +1,91 @@
+<div class="profile-container">
+  <mat-card class="profile-card">
+    <mat-card-header>
+      <mat-card-title>Profile Settings</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="profileForm" (ngSubmit)="onUpdateProfile()">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name</mat-label>
+          <input matInput formControlName="firstName">
+          @if (profileForm.get('firstName')?.hasError('required') && profileForm.get('firstName')?.touched) {
+            <mat-error>First name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last Name</mat-label>
+          <input matInput formControlName="lastName">
+          @if (profileForm.get('lastName')?.hasError('required') && profileForm.get('lastName')?.touched) {
+            <mat-error>Last name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email">
+          @if (profileForm.get('email')?.hasError('required') && profileForm.get('email')?.touched) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (profileForm.get('email')?.hasError('email') && profileForm.get('email')?.touched) {
+            <mat-error>Please enter a valid email</mat-error>
+          }
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" 
+                [disabled]="profileForm.invalid || isLoading">
+          Update Profile
+        </button>
+      </form>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <h3>Change Password</h3>
+      <form [formGroup]="passwordForm" (ngSubmit)="onUpdatePassword()">
+        <mat-form-field appearance="outline">
+          <mat-label>Current Password</mat-label>
+          <input matInput type="password" formControlName="currentPassword">
+          @if (passwordForm.get('currentPassword')?.hasError('required') && passwordForm.get('currentPassword')?.touched) {
+            <mat-error>Current password is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>New Password</mat-label>
+          <input matInput type="password" formControlName="newPassword">
+          @if (passwordForm.get('newPassword')?.hasError('required') && passwordForm.get('newPassword')?.touched) {
+            <mat-error>New password is required</mat-error>
+          }
+          @if (passwordForm.get('newPassword')?.hasError('pattern') && passwordForm.get('newPassword')?.touched) {
+            <mat-error>
+              Password must contain uppercase, lowercase, number and special character
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm New Password</mat-label>
+          <input matInput type="password" formControlName="confirmPassword">
+          @if (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched) {
+            <mat-error>Passwords do not match</mat-error>
+          }
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" 
+                [disabled]="passwordForm.invalid || isLoading">
+          Update Password
+        </button>
+      </form>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <button mat-raised-button color="warn" (click)="onDeleteAccount()">
+          Delete Account
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div> 

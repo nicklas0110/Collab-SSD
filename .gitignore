@@ -1,0 +1,43 @@
+# Frontend (Angular)
+/CollabFrontend/dist
+/CollabFrontend/.angular
+/CollabFrontend/node_modules
+/CollabFrontend/.env
+/CollabFrontend/.env.*
+/CollabFrontend/npm-debug.log
+/CollabFrontend/yarn-debug.log
+/CollabFrontend/yarn-error.log
+/CollabFrontend/.vscode/*
+/CollabFrontend/*.suo
+/CollabFrontend/*.ntvs*
+/CollabFrontend/*.njsproj
+/CollabFrontend/*.sln
+/CollabFrontend/*.sw?
+
+# Backend (.NET)
+/CollabBackend/**/bin/
+/CollabBackend/**/obj/
+/CollabBackend/**/.vs/
+/CollabBackend/**/Debug/
+/CollabBackend/**/Release/
+/CollabBackend/**/*.user
+/CollabBackend/**/*.userosscache
+/CollabBackend/**/*.dbmdl
+/CollabBackend/**/*.jfm
+/CollabBackend/**/Properties/launchSettings.json
+/CollabBackend/**/*.sqlite
+/CollabBackend/**/*.sqlite3
+/CollabBackend/**/*.db
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db 

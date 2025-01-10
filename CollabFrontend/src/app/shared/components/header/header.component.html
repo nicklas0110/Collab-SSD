@@ -1,0 +1,42 @@
+<mat-toolbar color="primary">
+  <span routerLink="/" class="brand">Collab</span>
+  
+  @if (authService.currentUser$ | async; as user) {
+    <nav>
+      <a mat-button routerLink="/dashboard" routerLinkActive="active">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </a>
+      <a mat-button routerLink="/collaborations" routerLinkActive="active">
+        <mat-icon>groups</mat-icon>
+        Collaborations
+      </a>
+      <a mat-button routerLink="/messages" routerLinkActive="active">
+        <mat-icon>message</mat-icon>
+        Messages
+      </a>
+    </nav>
+
+    <div class="user-menu">
+      <button mat-button [matMenuTriggerFor]="menu">
+        <mat-icon>account_circle</mat-icon>
+        {{ user.firstName }}
+      </button>
+      <mat-menu #menu="matMenu">
+        <a mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>
+          Profile
+        </a>
+        <button mat-menu-item (click)="onLogout()">
+          <mat-icon>exit_to_app</mat-icon>
+          Logout
+        </button>
+      </mat-menu>
+    </div>
+  } @else {
+    <nav>
+      <a mat-button routerLink="/login" routerLinkActive="active">Login</a>
+      <a mat-button routerLink="/register" routerLinkActive="active">Register</a>
+    </nav>
+  }
+</mat-toolbar>
