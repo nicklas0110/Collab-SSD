@@ -103,13 +103,13 @@ public static class DbSeeder
         // Create messages with encryption and signatures
         var messages = new[]
         {
-            CreateMessage("Welcome to Project Alpha!", adminUser, collaboration1),
-            CreateMessage("Thanks for having me!", user1, collaboration1),
-            CreateMessage("Let's get started!", user2, collaboration1),
-            CreateMessage("Project Beta kickoff", user1, collaboration2),
-            CreateMessage("Looking forward to this", user2, collaboration2),
-            CreateMessage("Just us two on this one", user2, collaboration3),
-            CreateMessage("Let's make it great!", adminUser, collaboration3)
+            CreateMessage("Hej 1", adminUser, collaboration1),
+            CreateMessage("Hej 2", user1, collaboration1),
+            CreateMessage("Hej 3", user2, collaboration1),
+            CreateMessage("Hej 4", user1, collaboration2),
+            CreateMessage("Hej 5", user2, collaboration2),
+            CreateMessage("Hej 6", user2, collaboration3),
+            CreateMessage("Hej 7", adminUser, collaboration3)
         };
 
         context.Messages.AddRange(messages);
