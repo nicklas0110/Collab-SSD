@@ -22,7 +22,7 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {
     if (isPlatformBrowser(this.platformId)) {
       const user = localStorage.getItem('user');
@@ -33,17 +33,19 @@ export class AuthService {
   }
 
   login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post<{user: User, token: string}>(`${environment.apiUrl}/auth/login`, credentials)
-      .pipe(
-        map(response => {
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            this.currentUserSubject.next(response.user);
-          }
-          return response;
-        })
-      );
+    return this.http.post<{user: User, token: string}>(
+      `${environment.apiUrl}/auth/login`, 
+      credentials
+    ).pipe(
+      map(response => {
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          this.currentUserSubject.next(response.user);
+        }
+        return response;
+      })
+    );
   }
 
   register(data: { 
@@ -52,17 +54,19 @@ export class AuthService {
     email: string; 
     password: string; 
   }): Observable<any> {
-    return this.http.post<{user: User, token: string}>(`${environment.apiUrl}/auth/register`, data)
-      .pipe(
-        map(response => {
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            this.currentUserSubject.next(response.user);
-          }
-          return response;
-        })
-      );
+    return this.http.post<{user: User, token: string}>(
+      `${environment.apiUrl}/auth/register`, 
+      data
+    ).pipe(
+      map(response => {
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          this.currentUserSubject.next(response.user);
+        }
+        return response;
+      })
+    );
   }
 
   isLoggedIn(): boolean {
