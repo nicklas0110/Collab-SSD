@@ -32,6 +32,7 @@ cd collab/CollabBackend
 
 2. Install dependencies:
 bash
+
 3. Update database:
 dotnet ef database update
 
@@ -39,6 +40,7 @@ dotnet restore
 4. Start Seq logging (optional):
 bash
 docker run -d --name seq -e ACCEPT_EULA=Y -p 5341:80 datalust/seq
+
 5. Run the backend:
 bash
 cd CollabBackend.Api
