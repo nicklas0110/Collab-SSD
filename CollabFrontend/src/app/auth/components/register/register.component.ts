@@ -78,15 +78,12 @@ export class RegisterComponent {
       this.errorMessage = '';
 
       const formData = this.registerForm.value;
-      console.log('Form Data:', formData);
-
       const sanitizedData = {
         firstName: this.validatorService.sanitizeInput(formData.firstName),
         lastName: this.validatorService.sanitizeInput(formData.lastName),
         email: formData.email.toLowerCase().trim(),
         password: formData.password
       };
-      console.log('Sanitized Data:', sanitizedData);
 
       this.authService.register(sanitizedData).subscribe({
         next: () => {
@@ -94,10 +91,48 @@ export class RegisterComponent {
         },
         error: (error) => {
           console.error('Registration Error:', error);
-          this.errorMessage = error.error?.message || error.message || 'Registration failed';
+          this.errorMessage = error.error?.message || 'Registration failed';
           this.isLoading = false;
         }
       });
+    } else {
+       // Show form validation errors
+       if (this.registerForm.get('email')?.hasError('required')) {
+        this.errorMessage = 'Email is required';
+      } else if (this.registerForm.get('email')?.hasError('pattern')) {
+        this.errorMessage = 'Invalid email format';
+      } else if (this.registerForm.get('firstName')?.hasError('required')) {
+        this.errorMessage = 'First name is required';
+      } else if (this.registerForm.get('firstName')?.hasError('pattern')) {
+        this.errorMessage = 'Invalid first name format';
+      } else if (this.registerForm.get('lastName')?.hasError('required')) {
+        this.errorMessage = 'Last name is required';
+      } else if (this.registerForm.get('lastName')?.hasError('pattern')) {
+        this.errorMessage = 'Invalid last name format';
+      } else if (this.registerForm.get('password')?.hasError('required')) {
+        this.errorMessage = 'Password is required';
+      } else if (this.registerForm.get('password')?.hasError('pattern')) {
+        this.errorMessage = 'Password must contain uppercase, lowercase, number and special character';
+      } else if (this.registerForm.hasError('mismatch')) {
+        this.errorMessage = 'Passwords do not match';
+      }
+      this.checkFormErrors();
+    }
+  }
+
+  private checkFormErrors() {
+    const password = this.registerForm.get('password')?.value;
+    if (this.registerForm.get('password')?.hasError('pattern')) {
+      const missing = [];
+      if (!/[A-Z]/.test(password)) missing.push('uppercase letter');
+      if (!/[a-z]/.test(password)) missing.push('lowercase letter');
+      if (!/[0-9]/.test(password)) missing.push('number');
+      if (!/[@$!%*?&]/.test(password)) missing.push('special character');
+      if (password.length < 8) missing.push('minimum length of 8 characters');
+      
+      this.errorMessage = `Password must include: ${missing.join(', ')}`;
+    } else if (this.registerForm.hasError('mismatch')) {
+      this.errorMessage = 'Passwords do not match';
     }
   }
 }

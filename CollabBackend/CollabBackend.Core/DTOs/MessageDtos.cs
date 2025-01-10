@@ -2,6 +2,11 @@ using System;
 
 namespace CollabBackend.Core.DTOs;
 
+public record CreateMessageDto(
+    string Content,
+    Guid CollaborationId
+);
+
 public record MessageDto(
     Guid Id,
     string Content,
@@ -13,7 +18,6 @@ public record MessageDto(
     DateTime UpdatedAt
 );
 
-public record CreateMessageDto(
-    string Content,
-    Guid CollaborationId
-); 
+public record UpdateMessageDto(
+    string Content
+);

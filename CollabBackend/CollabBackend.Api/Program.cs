@@ -71,6 +71,16 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Add logging
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+    logging.AddFile("Logs/security-{Date}.txt"); // Requires Serilog.Extensions.Logging.File package
+});
+
+builder.Services.AddScoped<ISecurityLoggingService, SecurityLoggingService>();
 
 // Add CORS
 builder.Services.AddCors(options =>

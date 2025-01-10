@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using CollabBackend.Core.Entities;
 using CollabBackend.Core.Interfaces;
 using CollabBackend.Core.DTOs;
+using CollabBackend.Core.Services;
 
 namespace CollabBackend.Api.Controllers;
 
@@ -17,15 +18,21 @@ public class MessagesController : ControllerBase
     private readonly IMessageRepository _messageRepository;
     private readonly ICollaborationRepository _collaborationRepository;
     private readonly IUserService _userService;
+    private readonly ISecurityLoggingService _securityLoggingService;
+    private readonly IUserRepository _userRepository;
 
     public MessagesController(
         IMessageRepository messageRepository,
         ICollaborationRepository collaborationRepository,
-        IUserService userService)
+        IUserService userService,
+        ISecurityLoggingService securityLoggingService,
+        IUserRepository userRepository)
     {
         _messageRepository = messageRepository;
         _collaborationRepository = collaborationRepository;
         _userService = userService;
+        _securityLoggingService = securityLoggingService;
+        _userRepository = userRepository;
     }
 
     [HttpGet]
@@ -110,43 +117,124 @@ public class MessagesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<MessageDto>> CreateMessage(CreateMessageDto dto)
+    public async Task<ActionResult<MessageDto>> CreateMessage([FromBody] CreateMessageDto dto)
     {
-        var userId = _userService.GetCurrentUserId();
-        
-        if (!await _collaborationRepository.IsUserParticipantAsync(dto.CollaborationId, userId))
-            return Forbid();
-
-        var message = new Message
+        try
         {
-            Content = dto.Content,
-            CollaborationId = dto.CollaborationId,
-            SenderId = userId,
-            Read = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            if (!ValidationService.IsValidMessageContent(dto.Content))
+            {
+                return BadRequest(new { message = "Invalid message content. Message must be between 1 and 2000 characters and not contain dangerous content." });
+            }
 
-        await _messageRepository.CreateAsync(message);
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userRepository.GetByIdAsync(userId);
+            
+            if (user == null)
+                return NotFound(new { message = "User not found" });
 
-        return new MessageDto(
-            message.Id,
-            message.Content,
-            message.SenderId,
-            new UserDto(
-                message.Sender.Id,
-                message.Sender.Email,
-                message.Sender.FirstName,
-                message.Sender.LastName,
-                message.Sender.Role,
-                message.Sender.CreatedAt,
-                message.Sender.UpdatedAt
-            ),
-            message.CollaborationId,
-            message.Read,
-            message.CreatedAt,
-            message.UpdatedAt
-        );
+            var sanitizedContent = ValidationService.SanitizeInput(dto.Content);
+
+            var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                Content = sanitizedContent,
+                SenderId = userId,
+                CollaborationId = dto.CollaborationId,
+                Read = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _messageRepository.CreateAsync(message);
+            
+            _securityLoggingService.LogSecurityEvent(
+                "MessageCreated",
+                $"Message created in collaboration {dto.CollaborationId}",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                LogLevel.Information
+            );
+
+            var senderDto = new UserDto(
+                user.Id,
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.Role,
+                user.CreatedAt,
+                user.UpdatedAt
+            );
+
+            return Ok(new MessageDto(
+                message.Id,
+                message.Content,
+                message.SenderId,
+                senderDto,
+                message.CollaborationId,
+                message.Read,
+                message.CreatedAt,
+                message.UpdatedAt
+            ));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<MessageDto>> UpdateMessage(Guid id, [FromBody] UpdateMessageDto dto)
+    {
+        try
+        {
+            if (!ValidationService.IsValidMessageContent(dto.Content))
+            {
+                return BadRequest(new { message = "Invalid message content. Message must be between 1 and 2000 characters and not contain dangerous content." });
+            }
+
+            var userId = _userService.GetCurrentUserId();
+            var message = await _messageRepository.GetByIdAsync(id);
+
+            if (message == null)
+                return NotFound(new { message = "Message not found" });
+
+            if (message.SenderId != userId)
+                return Forbid();
+
+            message.Content = ValidationService.SanitizeInput(dto.Content);
+            message.UpdatedAt = DateTime.UtcNow;
+
+            await _messageRepository.UpdateAsync(message);
+
+            _securityLoggingService.LogSecurityEvent(
+                "MessageUpdated",
+                $"Message {id} updated",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                LogLevel.Information
+            );
+
+            return Ok(new MessageDto(
+                message.Id,
+                message.Content,
+                message.SenderId,
+                new UserDto(
+                    message.Sender.Id,
+                    message.Sender.Email,
+                    message.Sender.FirstName,
+                    message.Sender.LastName,
+                    message.Sender.Role,
+                    message.Sender.CreatedAt,
+                    message.Sender.UpdatedAt
+                ),
+                message.CollaborationId,
+                message.Read,
+                message.CreatedAt,
+                message.UpdatedAt
+            ));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id}/read")]

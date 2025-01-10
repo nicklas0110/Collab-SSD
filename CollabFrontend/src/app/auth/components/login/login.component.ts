@@ -48,20 +48,29 @@ export class LoginComponent {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const loginData = {
+      const credentials = {
         email: this.loginForm.value.email.toLowerCase().trim(),
         password: this.loginForm.value.password
       };
 
-      this.authService.login(loginData).subscribe({
-        next: () => {
+      this.authService.login(credentials).subscribe({
+        next: (response) => {
           this.router.navigate(['/dashboard']);
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || error.message || 'Login failed';
+          console.error('Login Error:', error);
+          this.errorMessage = error.error?.message || 'Login failed';
           this.isLoading = false;
         }
       });
+    } else {
+      if (this.loginForm.get('email')?.hasError('required')) {
+        this.errorMessage = 'Email is required';
+      } else if (this.loginForm.get('email')?.hasError('pattern')) {
+        this.errorMessage = 'Invalid email format';
+      } else if (this.loginForm.get('password')?.hasError('required')) {
+        this.errorMessage = 'Password is required';
+      }
     }
   }
 }

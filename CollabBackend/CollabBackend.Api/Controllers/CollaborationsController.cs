@@ -7,6 +7,7 @@ using CollabBackend.Core.Entities;
 using CollabBackend.Core.Interfaces;
 using CollabBackend.Core.DTOs;
 using CollabBackend.Infrastructure.Services;
+using CollabBackend.Core.Services;
 
 namespace CollabBackend.Api.Controllers;
 
@@ -18,15 +19,18 @@ public class CollaborationsController : ControllerBase
     private readonly ICollaborationRepository _collaborationRepository;
     private readonly IUserRepository _userRepository;
     private readonly IUserService _userService;
+    private readonly ISecurityLoggingService _securityLoggingService;
 
     public CollaborationsController(
         ICollaborationRepository collaborationRepository,
         IUserRepository userRepository,
-        IUserService userService)
+        IUserService userService,
+        ISecurityLoggingService securityLoggingService)
     {
         _collaborationRepository = collaborationRepository;
         _userRepository = userRepository;
         _userService = userService;
+        _securityLoggingService = securityLoggingService;
     }
 
     [HttpGet]
@@ -75,94 +79,136 @@ public class CollaborationsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CollaborationDto>> CreateCollaboration(CreateCollaborationDto dto)
+    public async Task<ActionResult<CollaborationDto>> CreateCollaboration([FromBody] CreateCollaborationDto dto)
     {
-        var userId = _userService.GetCurrentUserId();
-        var collaboration = new Collaboration
+        try
         {
-            Title = dto.Title,
-            Description = dto.Description,
-            CreatedById = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Status = dto.Status
-        };
+            // Validate inputs
+            if (!ValidationService.IsValidContent(dto.Title, maxLength: 100))
+                return BadRequest(new { message = "Invalid title format or length" });
 
-        var participants = await _userRepository.GetUsersByIdsAsync(dto.ParticipantIds);
-        collaboration.Participants = participants.ToList();
+            if (!ValidationService.IsValidContent(dto.Description, maxLength: 500))
+                return BadRequest(new { message = "Invalid description format or length" });
 
-        await _collaborationRepository.AddAsync(collaboration);
+            // Sanitize inputs
+            var sanitizedTitle = ValidationService.SanitizeInput(dto.Title);
+            var sanitizedDescription = ValidationService.SanitizeInput(dto.Description);
 
-        return new CollaborationDto(
-            collaboration.Id,
-            collaboration.Title,
-            collaboration.Description,
-            collaboration.Participants.Select(p => new UserDto(
-                p.Id, p.Email, p.FirstName, p.LastName, p.Role, p.CreatedAt, p.UpdatedAt)).ToList(),
-            new UserDto(collaboration.CreatedBy.Id, collaboration.CreatedBy.Email, 
-                collaboration.CreatedBy.FirstName, collaboration.CreatedBy.LastName, 
-                collaboration.CreatedBy.Role, collaboration.CreatedBy.CreatedAt, 
-                collaboration.CreatedBy.UpdatedAt),
-            collaboration.CreatedAt,
-            collaboration.UpdatedAt,
-            collaboration.Status
-        );
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+
+            var collaboration = new Collaboration
+            {
+                Id = Guid.NewGuid(),
+                Title = sanitizedTitle,
+                Description = sanitizedDescription,
+                CreatedById = userId,
+                Status = "active",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var participants = await _userRepository.GetUsersByIdsAsync(dto.ParticipantIds);
+            collaboration.Participants = participants.ToList();
+
+            await _collaborationRepository.AddAsync(collaboration);
+
+            _securityLoggingService.LogCollaborationAccess(
+                userId, 
+                collaboration.Id, 
+                "create", 
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+            );
+
+            return Ok(new CollaborationDto(
+                collaboration.Id,
+                collaboration.Title,
+                collaboration.Description,
+                collaboration.Participants.Select(p => new UserDto(
+                    p.Id, p.Email, p.FirstName, p.LastName, p.Role, p.CreatedAt, p.UpdatedAt)).ToList(),
+                new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.Role, user.CreatedAt, user.UpdatedAt),
+                collaboration.CreatedAt,
+                collaboration.UpdatedAt,
+                collaboration.Status
+            ));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<CollaborationDto>> UpdateCollaboration(Guid id, UpdateCollaborationDto collaboration)
+    public async Task<ActionResult<CollaborationDto>> UpdateCollaboration(Guid id, [FromBody] UpdateCollaborationDto dto)
     {
-        var userId = _userService.GetCurrentUserId();
-        var existing = await _collaborationRepository.GetByIdAsync(id);
-        
-        if (existing == null)
+        try
         {
-            return NotFound();
-        }
+            if (!ValidationService.IsValidCollaborationTitle(dto.Title))
+            {
+                return BadRequest(new { message = "Invalid title format or length" });
+            }
 
-        if (existing.CreatedById != userId)
+            if (!ValidationService.IsValidCollaborationDescription(dto.Description))
+            {
+                return BadRequest(new { message = "Invalid description format or length" });
+            }
+
+            if (!ValidationService.IsValidCollaborationStatus(dto.Status))
+            {
+                return BadRequest(new { message = "Invalid status" });
+            }
+
+            var userId = _userService.GetCurrentUserId();
+            var collaboration = await _collaborationRepository.GetByIdAsync(id);
+
+            if (collaboration == null)
+                return NotFound();
+
+            if (collaboration.CreatedById != userId)
+                return Forbid();
+
+            collaboration.Title = ValidationService.SanitizeInput(dto.Title);
+            collaboration.Description = ValidationService.SanitizeInput(dto.Description);
+            collaboration.Status = dto.Status.ToLower();
+            collaboration.UpdatedAt = DateTime.UtcNow;
+
+            await _collaborationRepository.UpdateAsync(collaboration);
+
+            _securityLoggingService.LogCollaborationAccess(
+                userId,
+                collaboration.Id,
+                "update",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+            );
+
+            // Return updated collaboration DTO
+            return Ok(new CollaborationDto(
+                collaboration.Id,
+                collaboration.Title,
+                collaboration.Description,
+                collaboration.Participants.Select(p => new UserDto(
+                    p.Id, p.Email, p.FirstName, p.LastName, p.Role, p.CreatedAt, p.UpdatedAt)).ToList(),
+                new UserDto(
+                    collaboration.CreatedBy.Id,
+                    collaboration.CreatedBy.Email,
+                    collaboration.CreatedBy.FirstName,
+                    collaboration.CreatedBy.LastName,
+                    collaboration.CreatedBy.Role,
+                    collaboration.CreatedBy.CreatedAt,
+                    collaboration.CreatedBy.UpdatedAt
+                ),
+                collaboration.CreatedAt,
+                collaboration.UpdatedAt,
+                collaboration.Status
+            ));
+        }
+        catch (Exception ex)
         {
-            return Forbid();
+            return BadRequest(new { message = ex.Message });
         }
-
-        existing.Title = collaboration.Title;
-        existing.Description = collaboration.Description;
-        existing.Status = collaboration.Status;
-        existing.UpdatedAt = DateTime.UtcNow;
-
-        await _collaborationRepository.UpdateAsync(existing);
-
-        // Create a simplified DTO that doesn't include sensitive user data
-        var participantDtos = existing.Participants.Select(p => new UserDto(
-            p.Id,
-            p.Email,
-            p.FirstName,
-            p.LastName,
-            p.Role,
-            p.CreatedAt,
-            p.UpdatedAt
-        )).ToList();
-
-        var createdByDto = new UserDto(
-            existing.CreatedBy.Id,
-            existing.CreatedBy.Email,
-            existing.CreatedBy.FirstName,
-            existing.CreatedBy.LastName,
-            existing.CreatedBy.Role,
-            existing.CreatedBy.CreatedAt,
-            existing.CreatedBy.UpdatedAt
-        );
-
-        return Ok(new CollaborationDto(
-            existing.Id,
-            existing.Title,
-            existing.Description,
-            participantDtos,
-            createdByDto,
-            existing.CreatedAt,
-            existing.UpdatedAt,
-            existing.Status
-        ));
     }
 
     [HttpDelete("{id}")]

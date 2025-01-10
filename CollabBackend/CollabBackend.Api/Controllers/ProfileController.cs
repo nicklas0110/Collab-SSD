@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using CollabBackend.Core.Interfaces;
 using CollabBackend.Core.DTOs;
+using CollabBackend.Core.Services;
 
 namespace CollabBackend.Api.Controllers;
 
@@ -13,11 +14,13 @@ public class ProfileController : ControllerBase
 {
     private readonly IProfileService _profileService;
     private readonly IUserService _userService;
+    private readonly ISecurityLoggingService _securityLoggingService;
 
-    public ProfileController(IProfileService profileService, IUserService userService)
+    public ProfileController(IProfileService profileService, IUserService userService, ISecurityLoggingService securityLoggingService)
     {
         _profileService = profileService;
         _userService = userService;
+        _securityLoggingService = securityLoggingService;
     }
 
     [HttpGet]
@@ -48,19 +51,42 @@ public class ProfileController : ControllerBase
         var userId = _userService.GetCurrentUserId();
         try
         {
-            var user = await _profileService.UpdateProfileAsync(userId, request.FirstName, request.LastName, request.Email);
-            var dto = new UserDto(
-                user.Id,
-                user.Email,
-                user.FirstName,
-                user.LastName,
-                user.Role,
-                user.CreatedAt,
-                user.UpdatedAt
+            // Validate inputs
+            if (!ValidationService.IsValidEmail(request.Email))
+                return BadRequest(new { message = "Invalid email format" });
+
+            if (!ValidationService.IsValidName(request.FirstName))
+                return BadRequest(new { message = "Invalid first name format" });
+
+            if (!ValidationService.IsValidName(request.LastName))
+                return BadRequest(new { message = "Invalid last name format" });
+
+            // Sanitize inputs
+            var sanitizedFirstName = ValidationService.SanitizeInput(request.FirstName);
+            var sanitizedLastName = ValidationService.SanitizeInput(request.LastName);
+            var sanitizedEmail = request.Email.ToLowerInvariant().Trim();
+
+            var updatedUser = await _profileService.UpdateProfileAsync(
+                userId,
+                sanitizedFirstName,
+                sanitizedLastName,
+                sanitizedEmail
             );
-            return Ok(dto);
+
+            _securityLoggingService.LogProfileUpdate(userId, 
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+            return Ok(new UserDto(
+                updatedUser.Id,
+                updatedUser.Email,
+                updatedUser.FirstName,
+                updatedUser.LastName,
+                updatedUser.Role,
+                updatedUser.CreatedAt,
+                updatedUser.UpdatedAt
+            ));
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
         }
@@ -72,11 +98,22 @@ public class ProfileController : ControllerBase
         var userId = _userService.GetCurrentUserId();
         try
         {
+            if (!ValidationService.IsValidPassword(request.NewPassword))
+            {
+                return BadRequest(new { message = "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special characters" });
+            }
+
             await _profileService.UpdatePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+            
+            _securityLoggingService.LogPasswordChange(userId, true, 
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+            
             return NoContent();
         }
         catch (UnauthorizedAccessException)
         {
+            _securityLoggingService.LogPasswordChange(userId, false, 
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
             return BadRequest(new { message = "Current password is incorrect" });
         }
     }
