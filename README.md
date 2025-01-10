@@ -43,7 +43,7 @@ dotnet ef database update
 bash
 docker run -d --name seq -e ACCEPT_EULA=Y -p 5341:80 datalust/seq
 
-6. activate https certificate
+6. activate https certificate:
 dotnet dev-certs https --trust
 
 7. Run the backend:
