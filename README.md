@@ -27,7 +27,7 @@ A secure collaboration platform built with ASP.NET Core and Angular, featuring e
 
 1. Clone the repository:
 bash
-git clone https://github.com/yourusername/collab.git
+git clone https://github.com/nicklas0110/collab.git
 cd collab/CollabBackend
 
 2. Install dependencies:
