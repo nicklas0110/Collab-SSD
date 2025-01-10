@@ -92,7 +92,8 @@ public class AuthService : IAuthService
 
     private string GenerateJwtToken(User user)
     {
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found"));
+        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ??
+        throw new InvalidOperationException("JWT Key not found"));
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {

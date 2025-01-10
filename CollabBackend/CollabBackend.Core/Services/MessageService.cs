@@ -124,14 +124,12 @@ public class MessageService : IMessageService
 
     private string ExtractSensitiveContent(string content)
     {
-        // Example: Extract content between [sensitive] tags
         var match = Regex.Match(content, @"\[sensitive\](.*?)\[/sensitive\]");
         return match.Success ? match.Groups[1].Value : string.Empty;
     }
 
     private string ReplaceSensitiveContent(string originalContent, string encryptedContent)
     {
-        // Example: Replace [sensitive]...[/sensitive] with encrypted content
         return Regex.Replace(
             originalContent, 
             @"\[sensitive\].*?\[/sensitive\]", 
