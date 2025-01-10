@@ -20,19 +20,22 @@ public class MessagesController : ControllerBase
     private readonly IUserService _userService;
     private readonly ISecurityLoggingService _securityLoggingService;
     private readonly IUserRepository _userRepository;
+    private readonly IMessageService _messageService;
 
     public MessagesController(
         IMessageRepository messageRepository,
         ICollaborationRepository collaborationRepository,
         IUserService userService,
         ISecurityLoggingService securityLoggingService,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IMessageService messageService)
     {
         _messageRepository = messageRepository;
         _collaborationRepository = collaborationRepository;
         _userService = userService;
         _securityLoggingService = securityLoggingService;
         _userRepository = userRepository;
+        _messageService = messageService;
     }
 
     [HttpGet]
@@ -42,7 +45,7 @@ public class MessagesController : ControllerBase
         var messages = await _messageRepository.GetAllForUserAsync(userId);
         var dtos = messages.Select(m => new MessageDto(
             m.Id,
-            m.Content,
+            _messageService.DecryptMessageContent(m.Content),
             m.SenderId,
             new UserDto(
                 m.Sender.Id,
@@ -64,30 +67,38 @@ public class MessagesController : ControllerBase
     [HttpGet("collaboration/{collaborationId}")]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetCollaborationMessages(Guid collaborationId)
     {
-        var userId = _userService.GetCurrentUserId();
-        if (!await _collaborationRepository.IsUserParticipantAsync(collaborationId, userId))
-            return Forbid();
+        try
+        {
+            var userId = _userService.GetCurrentUserId();
+            if (!await _collaborationRepository.IsUserParticipantAsync(collaborationId, userId))
+                return Forbid();
 
-        var messages = await _messageRepository.GetByCollaborationIdAsync(collaborationId);
-        var dtos = messages.Select(m => new MessageDto(
-            m.Id,
-            m.Content,
-            m.SenderId,
-            new UserDto(
-                m.Sender.Id,
-                m.Sender.Email,
-                m.Sender.FirstName,
-                m.Sender.LastName,
-                m.Sender.Role,
-                m.Sender.CreatedAt,
-                m.Sender.UpdatedAt
-            ),
-            m.CollaborationId,
-            m.Read,
-            m.CreatedAt,
-            m.UpdatedAt
-        ));
-        return Ok(dtos);
+            var messages = await _messageRepository.GetByCollaborationIdAsync(collaborationId);
+            var dtos = messages.Select(m => new MessageDto(
+                m.Id,
+                _messageService.DecryptMessageContent(m.Content),
+                m.SenderId,
+                new UserDto(
+                    m.Sender.Id,
+                    m.Sender.Email,
+                    m.Sender.FirstName,
+                    m.Sender.LastName,
+                    m.Sender.Role,
+                    m.Sender.CreatedAt,
+                    m.Sender.UpdatedAt
+                ),
+                m.CollaborationId,
+                m.Read,
+                m.CreatedAt,
+                m.UpdatedAt
+            )).ToList();
+            
+            return Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error processing messages", details = ex.Message });
+        }
     }
 
     [HttpGet("unread")]
@@ -123,7 +134,7 @@ public class MessagesController : ControllerBase
         {
             if (!ValidationService.IsValidMessageContent(dto.Content))
             {
-                return BadRequest(new { message = "Invalid message content. Message must be between 1 and 2000 characters and not contain dangerous content." });
+                return BadRequest(new { message = "Invalid message content..." });
             }
 
             var userId = _userService.GetCurrentUserId();
@@ -133,11 +144,12 @@ public class MessagesController : ControllerBase
                 return NotFound(new { message = "User not found" });
 
             var sanitizedContent = ValidationService.SanitizeInput(dto.Content);
+            var encryptedContent = _messageService.EncryptMessageContent(sanitizedContent);
 
             var message = new Message
             {
                 Id = Guid.NewGuid(),
-                Content = sanitizedContent,
+                Content = encryptedContent,
                 SenderId = userId,
                 CollaborationId = dto.CollaborationId,
                 Read = false,
@@ -154,21 +166,19 @@ public class MessagesController : ControllerBase
                 LogLevel.Information
             );
 
-            var senderDto = new UserDto(
-                user.Id,
-                user.Email,
-                user.FirstName,
-                user.LastName,
-                user.Role,
-                user.CreatedAt,
-                user.UpdatedAt
-            );
-
             return Ok(new MessageDto(
                 message.Id,
-                message.Content,
+                _messageService.DecryptMessageContent(message.Content),
                 message.SenderId,
-                senderDto,
+                new UserDto(
+                    user.Id,
+                    user.Email,
+                    user.FirstName,
+                    user.LastName,
+                    user.Role,
+                    user.CreatedAt,
+                    user.UpdatedAt
+                ),
                 message.CollaborationId,
                 message.Read,
                 message.CreatedAt,

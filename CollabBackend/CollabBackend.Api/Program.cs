@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Logging;
+using CollabBackend.Core.Settings;
+using CollabBackend.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +72,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<CryptoService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 
 // Add logging
 builder.Services.AddLogging(logging =>
@@ -95,6 +99,9 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowCredentials());
 });
+
+// Add configuration for CryptoService
+builder.Services.Configure<CryptoSettings>(builder.Configuration.GetSection("Crypto"));
 
 var app = builder.Build();
 
