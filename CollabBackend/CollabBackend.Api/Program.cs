@@ -10,8 +10,21 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Logging;
 using CollabBackend.Core.Settings;
 using CollabBackend.Core.Services;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.Seq("http://localhost:5341")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -82,15 +95,6 @@ builder.Services.AddScoped<DigitalSignatureService>();
 builder.Services.AddHostedService<KeyRotationBackgroundService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 
-// Add logging
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.AddConsole();
-    logging.AddDebug();
-    logging.AddFile("Logs/security-{Date}.txt"); // Requires Serilog.Extensions.Logging.File package
-});
-
 builder.Services.AddScoped<ISecurityLoggingService, SecurityLoggingService>();
 
 // Add CORS
@@ -111,6 +115,26 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<CryptoSettings>(builder.Configuration.GetSection("Crypto"));
 
 var app = builder.Build();
+
+// Add security headers middleware
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Content-Security-Policy", 
+        "default-src 'self'; " +
+        "script-src 'self'; " +
+        "style-src 'self'; " +
+        "img-src 'self'; " +
+        "font-src 'self'; " +
+        "connect-src 'self';");
+    context.Response.Headers.Append("Permissions-Policy", 
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+    
+    await next();
+});
 
 // Seed the database
 using (var scope = app.Services.CreateScope())
