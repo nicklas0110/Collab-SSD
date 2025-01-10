@@ -4,7 +4,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { RouterLink } from '@angular/router';
 import { CollaborationService } from '../../../collaboration/services/collaboration.service';
 import { MessageService } from '../../../messages/services/message.service';
 import { map, combineLatest } from 'rxjs';
@@ -31,8 +30,7 @@ export interface ActivityItem {
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatChipsModule,
-    RouterLink
+    MatChipsModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']

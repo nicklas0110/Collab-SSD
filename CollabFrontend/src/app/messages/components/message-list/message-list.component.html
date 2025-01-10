@@ -58,7 +58,13 @@
             <input matInput 
                    [(ngModel)]="newMessage" 
                    placeholder="Type a message..."
+                   maxlength="5000"
+                   #messageInput="ngModel"
                    (keyup.enter)="sendMessage()">
+            <mat-hint align="end">{{(newMessage || '').length}}/5000</mat-hint>
+            <mat-error *ngIf="messageInput.errors?.['maxlength']">
+              Message cannot exceed 5000 characters
+            </mat-error>
           </mat-form-field>
           <button mat-icon-button color="primary" (click)="sendMessage()">
             <mat-icon>send</mat-icon>

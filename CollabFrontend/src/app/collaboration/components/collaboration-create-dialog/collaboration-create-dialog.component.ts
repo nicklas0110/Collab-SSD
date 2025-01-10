@@ -1,13 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
-import { CollaborationService } from '../../services/collaboration.service';
+import { ValidatorService } from '../../../shared/services/validator.service';
 import { AuthService } from '../../../auth/services/auth.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-collaboration-create-dialog',
@@ -18,49 +18,59 @@ import { AuthService } from '../../../auth/services/auth.service';
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule,
-    MatSelectModule
+    MatButtonModule
   ],
   templateUrl: './collaboration-create-dialog.component.html',
   styleUrls: ['./collaboration-create-dialog.component.css']
 })
-export class CollaborationCreateDialogComponent implements OnInit {
+export class CollaborationCreateDialogComponent {
   form: FormGroup;
-  currentUserId: string = '';
 
   constructor(
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<CollaborationCreateDialogComponent>,
-    private collaborationService: CollaborationService,
-    private authService: AuthService
+    private validatorService: ValidatorService,
+    private authService: AuthService,
+    private dialogRef: MatDialogRef<CollaborationCreateDialogComponent>
   ) {
     this.form = this.fb.group({
-      title: ['', Validators.required],
-      description: [''],
-      participantIds: [[], Validators.required]
-    });
-  }
-
-  ngOnInit() {
-    // Get current user's ID and add it to participants
-    this.authService.currentUser$.subscribe(user => {
-      if (user) {
-        this.currentUserId = user.id;
-        this.form.patchValue({
-          participantIds: [user.id]
-        });
-      }
+      title: ['', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z0-9\\s\\-_]{3,100}$'),
+        Validators.maxLength(100)
+      ]],
+      description: ['', [
+        Validators.pattern('^[\\w\\s\\-_.,!?()]{0,500}$'),
+        Validators.maxLength(500)
+      ]]
     });
   }
 
   onSubmit() {
     if (this.form.valid) {
-      this.collaborationService.createCollaboration(this.form.value).subscribe({
-        next: (collaboration) => {
-          this.dialogRef.close(collaboration);
-        },
-        error: (error) => {
-          console.error('Error creating collaboration:', error);
+      const formValue = this.form.value;
+      
+      const sanitizedTitle = this.validatorService.sanitizeInput(formValue.title || '');
+      const sanitizedDescription = this.validatorService.sanitizeInput(formValue.description || '');
+
+      if (!this.validatorService.validateTitle(sanitizedTitle)) {
+        return;
+      }
+
+      if (sanitizedDescription && !this.validatorService.validateDescription(sanitizedDescription)) {
+        return;
+      }
+
+      // Get current user's ID
+      this.authService.currentUser$.pipe(
+        take(1)
+      ).subscribe(user => {
+        if (user) {
+          this.dialogRef.close({
+            title: sanitizedTitle,
+            description: sanitizedDescription,
+            status: 'active',
+            participantIds: [user.id] // Include current user as participant
+          });
         }
       });
     }

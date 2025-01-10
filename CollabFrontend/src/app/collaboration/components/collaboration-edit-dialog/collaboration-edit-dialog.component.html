@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Create New Collaboration</h2>
+<h2 mat-dialog-title>Edit Collaboration</h2>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   <mat-dialog-content>
     <mat-form-field appearance="fill">
@@ -27,10 +27,24 @@
         Description can only contain letters, numbers, spaces, and basic punctuation
       </mat-error>
     </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status" required>
+        @for (status of statusOptions; track status) {
+          <mat-option [value]="status">
+            {{status | titlecase}}
+          </mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="form.get('status')?.errors?.['required']">
+        Status is required
+      </mat-error>
+    </mat-form-field>
   </mat-dialog-content>
-  
+
   <mat-dialog-actions align="end">
     <button mat-button mat-dialog-close>Cancel</button>
-    <button mat-raised-button color="primary" type="submit" [disabled]="!form.valid">Create</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="!form.valid">Update</button>
   </mat-dialog-actions>
 </form> 

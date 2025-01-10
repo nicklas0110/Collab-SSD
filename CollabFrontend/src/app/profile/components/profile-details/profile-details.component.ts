@@ -42,9 +42,20 @@ export class ProfileDetailsComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.profileForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]]
+      firstName: ['', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z\\s\\-]{2,20}$'),
+        Validators.maxLength(20)
+      ]],
+      lastName: ['', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z\\s\\-]{2,20}$'),
+        Validators.maxLength(20)
+      ]],
+      email: ['', [
+        Validators.required,
+        Validators.email
+      ]]
     });
 
     this.passwordForm = this.fb.group({

@@ -14,6 +14,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { CollaborationService } from '../../../collaboration/services/collaboration.service';
 import { BehaviorSubject, filter, switchMap, take } from 'rxjs';
 import { Message } from '../../interfaces/message.interface';
+import { ValidatorService } from '../../../shared/services/validator.service';
 
 @Component({
   selector: 'app-message-list',
@@ -59,7 +60,8 @@ export class MessageListComponent implements OnInit {
     private messageService: MessageService,
     private authService: AuthService,
     private collaborationService: CollaborationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private validatorService: ValidatorService
   ) {}
 
   ngOnInit() {
@@ -92,10 +94,18 @@ export class MessageListComponent implements OnInit {
   }
 
   sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedCollaboration) return;
+    if (!this.newMessage?.trim() || !this.selectedCollaboration) return;
+    
+    // Validate message length
+    if (this.newMessage.length > 5000) {
+      // You might want to show a snackbar or error message here
+      return;
+    }
+
+    const sanitizedMessage = this.validatorService.sanitizeInput(this.newMessage);
 
     this.messageService.sendMessage({
-      content: this.newMessage,
+      content: sanitizedMessage,
       collaborationId: this.selectedCollaboration.id,
       read: true
     }).subscribe(() => {

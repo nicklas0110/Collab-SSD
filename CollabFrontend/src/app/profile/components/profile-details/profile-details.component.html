@@ -6,35 +6,51 @@
 
     <mat-card-content>
       <form [formGroup]="profileForm" (ngSubmit)="onUpdateProfile()">
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label>First Name</mat-label>
-          <input matInput formControlName="firstName">
-          @if (profileForm.get('firstName')?.hasError('required') && profileForm.get('firstName')?.touched) {
-            <mat-error>First name is required</mat-error>
-          }
+          <input matInput 
+                 formControlName="firstName"
+                 maxlength="20"
+                 required>
+          <mat-hint align="end">{{profileForm.get('firstName')?.value?.length || 0}}/20</mat-hint>
+          <mat-error *ngIf="profileForm.get('firstName')?.errors?.['required']">
+            First name is required
+          </mat-error>
+          <mat-error *ngIf="profileForm.get('firstName')?.errors?.['pattern']">
+            First name must contain only letters, spaces, or hyphens
+          </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label>Last Name</mat-label>
-          <input matInput formControlName="lastName">
-          @if (profileForm.get('lastName')?.hasError('required') && profileForm.get('lastName')?.touched) {
-            <mat-error>Last name is required</mat-error>
-          }
+          <input matInput 
+                 formControlName="lastName"
+                 maxlength="20"
+                 required>
+          <mat-hint align="end">{{profileForm.get('lastName')?.value?.length || 0}}/20</mat-hint>
+          <mat-error *ngIf="profileForm.get('lastName')?.errors?.['required']">
+            Last name is required
+          </mat-error>
+          <mat-error *ngIf="profileForm.get('lastName')?.errors?.['pattern']">
+            Last name must contain only letters, spaces, or hyphens
+          </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="fill">
           <mat-label>Email</mat-label>
-          <input matInput formControlName="email" type="email">
-          @if (profileForm.get('email')?.hasError('required') && profileForm.get('email')?.touched) {
-            <mat-error>Email is required</mat-error>
-          }
-          @if (profileForm.get('email')?.hasError('email') && profileForm.get('email')?.touched) {
-            <mat-error>Please enter a valid email</mat-error>
-          }
+          <input matInput formControlName="email" required type="email">
+          <mat-error *ngIf="profileForm.get('email')?.errors?.['required']">
+            Email is required
+          </mat-error>
+          <mat-error *ngIf="profileForm.get('email')?.errors?.['email']">
+            Please enter a valid email address
+          </mat-error>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" 
-                [disabled]="profileForm.invalid || isLoading">
+        <button mat-raised-button 
+                color="primary" 
+                type="submit"
+                [disabled]="!profileForm.valid || isLoading">
           Update Profile
         </button>
       </form>

@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CollaborationService } from '../../services/collaboration.service';
 import { CollaborationCreateDialogComponent } from '../collaboration-create-dialog/collaboration-create-dialog.component';
 import { CollaborationEditDialogComponent } from '../collaboration-edit-dialog/collaboration-edit-dialog.component';
@@ -30,7 +31,8 @@ interface User {
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
-    MatDialogModule
+    MatDialogModule,
+    MatTooltipModule
   ],
   templateUrl: './collaboration-list.component.html',
   styleUrl: './collaboration-list.component.css'
@@ -75,19 +77,26 @@ export class CollaborationListComponent implements OnInit {
     
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.collaborations$ = this.collaborationService.getCollaborations();
+        this.collaborationService.createCollaboration(result)
+          .subscribe({
+            next: () => {
+              this.collaborations$ = this.collaborationService.getCollaborations();
+            },
+            error: (error) => {
+              console.error('Error creating collaboration:', error);
+            }
+          });
       }
     });
   }
 
-  deleteCollaboration(id: string, event: Event) {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  deleteCollaboration(collab: any, event: Event) {
+    event.stopPropagation();  // Prevent card click event
     if (confirm('Are you sure you want to delete this collaboration?')) {
-      this.collaborationService.deleteCollaboration(id).subscribe(() => {
-        this.collaborations$ = this.collaborationService.getCollaborations();
-      });
+      this.collaborationService.deleteCollaboration(collab.id)
+        .subscribe(() => {
+          this.collaborations$ = this.collaborationService.getCollaborations();
+        });
     }
   }
 
@@ -106,27 +115,47 @@ export class CollaborationListComponent implements OnInit {
     });
   }
 
-  inviteParticipant(collab: any, event: Event) {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  openInviteDialog(collab: any) {
     const dialogRef = this.dialog.open(CollaborationInviteDialogComponent, {
-      data: {
+      data: { 
         collaborationId: collab.id,
-        currentUserId: this.currentUserId,
-        participants: collab.participants
+        currentParticipants: collab.participants 
       }
     });
 
-    dialogRef.afterClosed().subscribe(userIds => {
-      if (userIds) {
-        const invites = userIds.map((userId: string) => 
-          this.collaborationService.addParticipant(collab.id, userId)
-        );
-        
-        forkJoin(invites).subscribe(() => {
-          this.collaborations$ = this.collaborationService.getCollaborations();
-        });
+    dialogRef.afterClosed().subscribe(userId => {
+      if (userId) {
+        this.collaborationService.addParticipant(collab.id, userId)
+          .subscribe(() => {
+            this.collaborations$ = this.collaborationService.getCollaborations();
+          });
+      }
+    });
+  }
+
+  getParticipantsList(participants: any[]): string {
+    return participants
+      .map(p => `${p.firstName} ${p.lastName}`)
+      .join(', ');
+  }
+
+  getAllParticipants(participants: any[]): string {
+    return `All Participants:\n${participants
+      .map(p => `${p.firstName} ${p.lastName}`)
+      .join('\n')}`;
+  }
+
+  openEditDialog(collab: any) {
+    const dialogRef = this.dialog.open(CollaborationEditDialogComponent, {
+      data: collab
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.collaborationService.updateCollaboration(collab.id, result)
+          .subscribe(() => {
+            this.collaborations$ = this.collaborationService.getCollaborations();
+          });
       }
     });
   }

@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>Invite Participant</h2>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <mat-dialog-content>
+    <mat-form-field appearance="fill">
+      <mat-label>Select User</mat-label>
+      <mat-select formControlName="userId" required>
+        @for (user of users$ | async; track user.id) {
+          <mat-option [value]="user.id">
+            {{ user.email }} ({{ user.firstName }} {{ user.lastName }})
+          </mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="form.get('userId')?.errors?.['required']">
+        Please select a user
+      </mat-error>
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button 
+            color="primary" 
+            type="submit" 
+            [disabled]="!form.valid">
+      Invite
+    </button>
+  </mat-dialog-actions>
+</form> 

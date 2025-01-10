@@ -24,38 +24,35 @@
               {{ collab.status | titlecase }}
             </mat-chip>
           </mat-chip-listbox>
+          
+          <div class="participants" 
+               [matTooltip]="getAllParticipants(collab.participants)"
+               matTooltipPosition="above">
+            <small>
+              Participants: 
+              <span class="participant-list">
+                {{ getParticipantsList(collab.participants) }}
+              </span>
+            </small>
+          </div>
         </mat-card-content>
 
         <mat-card-actions>
-          <button mat-button color="primary"
-          *ngIf="currentUserId === collab.createdBy.id"
-          (click)="editCollaboration(collab, $event)">
-            <mat-icon>edit</mat-icon>
-            Edit
-          </button>
-          <button mat-button color="warn" 
-                  *ngIf="currentUserId === collab.createdBy.id" 
-                  (click)="deleteCollaboration(collab.id, $event)">
-            <mat-icon>delete</mat-icon>
-            Delete
-          </button>
-          <button mat-button color="primary" 
-                  *ngIf="currentUserId === collab.createdBy.id"
-                  (click)="inviteParticipant(collab, $event)">
-            <mat-icon>person_add</mat-icon>
-            Invite
-          </button>
+          @if (collab.createdBy.id === currentUserId) {
+            <button mat-button color="primary" (click)="openEditDialog(collab); $event.stopPropagation()">
+              <mat-icon>edit</mat-icon>
+              Edit
+            </button>
+            <button mat-button color="accent" (click)="openInviteDialog(collab); $event.stopPropagation()">
+              <mat-icon>person_add</mat-icon>
+              Invite
+            </button>
+            <button mat-button color="warn" (click)="deleteCollaboration(collab, $event)">
+              <mat-icon>delete</mat-icon>
+              Delete
+            </button>
+          }
         </mat-card-actions>
-      </mat-card>
-    } @empty {
-      <mat-card class="empty-state">
-        <mat-card-content>
-          <mat-icon>groups_off</mat-icon>
-          <p>No collaborations found</p>
-          <button mat-raised-button color="primary" (click)="openCreateDialog()">
-            Create your first collaboration
-          </button>
-        </mat-card-content>
       </mat-card>
     }
   </div>
