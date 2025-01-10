@@ -87,12 +87,15 @@ public class CollaborationsController : ControllerBase
             if (!ValidationService.IsValidContent(dto.Title, maxLength: 100))
                 return BadRequest(new { message = "Invalid title format or length" });
 
-            if (!ValidationService.IsValidContent(dto.Description, maxLength: 500))
+            // Changed validation for description - now optional
+            if (dto.Description != null && !ValidationService.IsValidContent(dto.Description, maxLength: 500))
                 return BadRequest(new { message = "Invalid description format or length" });
 
             // Sanitize inputs
             var sanitizedTitle = ValidationService.SanitizeInput(dto.Title);
-            var sanitizedDescription = ValidationService.SanitizeInput(dto.Description);
+            var sanitizedDescription = dto.Description != null ? 
+                ValidationService.SanitizeInput(dto.Description) : 
+                string.Empty;  // Use empty string if description is null
 
             var userId = _userService.GetCurrentUserId();
             var user = await _userRepository.GetByIdAsync(userId);
@@ -104,7 +107,7 @@ public class CollaborationsController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 Title = sanitizedTitle,
-                Description = sanitizedDescription,
+                Description = sanitizedDescription,  // Use the sanitized description or empty string
                 CreatedById = userId,
                 Status = "active",
                 CreatedAt = DateTime.UtcNow,

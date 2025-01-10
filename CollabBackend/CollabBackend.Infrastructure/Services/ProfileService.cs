@@ -72,11 +72,18 @@ public class ProfileService : IProfileService
     public async Task DeleteAccountAsync(Guid userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found");
-        }
+        if (user == null) return;
 
-        await _userRepository.DeleteAsync(userId);
+        // Generate a random password (64 characters)
+        var randomPassword = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + 
+                            Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+
+        // Anonymize user data instead of deleting
+        user.FirstName = "[Deleted]";
+        user.LastName = "User";
+        user.Email = $"deleted_{userId}@example.com";
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(randomPassword);
+        
+        await _userRepository.UpdateAsync(user);
     }
 } 

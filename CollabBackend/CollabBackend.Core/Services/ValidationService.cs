@@ -45,7 +45,9 @@ public static class ValidationService
     // Content validation (for messages, descriptions etc.)
     public static bool IsValidContent(string content, int maxLength = 5000)
     {
-        if (string.IsNullOrWhiteSpace(content)) return false;
+        // Allow null or empty content
+        if (string.IsNullOrWhiteSpace(content))
+            return true;
         
         // Check for potentially dangerous patterns
         var dangerousPatterns = new[]
@@ -66,6 +68,8 @@ public static class ValidationService
     // Sanitize input
     public static string SanitizeInput(string input)
     {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
 
         // Replace potentially dangerous characters
@@ -86,7 +90,10 @@ public static class ValidationService
 
     public static bool IsValidCollaborationDescription(string description)
     {
-        if (string.IsNullOrWhiteSpace(description)) return false;
+        // Allow null or empty description
+        if (string.IsNullOrWhiteSpace(description))
+            return true;
+        
         return description.Length <= 1000 && !ContainsDangerousContent(description);
     }
 

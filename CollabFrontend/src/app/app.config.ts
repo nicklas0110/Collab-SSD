@@ -5,6 +5,7 @@ import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { RecaptchaModule, RECAPTCHA_SETTINGS, RecaptchaSettings } from 'ng-recaptcha';
 
 // Material Modules
 import { MatCardModule } from '@angular/material/card';
@@ -29,6 +30,7 @@ export const appConfig: ApplicationConfig = {
       BrowserAnimationsModule,
       ReactiveFormsModule,
       FormsModule,
+      RecaptchaModule,
       MatCardModule,
       MatFormFieldModule,
       MatInputModule,
@@ -40,13 +42,19 @@ export const appConfig: ApplicationConfig = {
       MatChipsModule,
       MatSnackBarModule
     ),
+    {
+      provide: RECAPTCHA_SETTINGS,
+      useValue: {
+        siteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+      } as RecaptchaSettings,
+    },
     provideRouter(routes),
     provideAnimations(),
     provideHttpClient(
       withFetch(),
       withInterceptors([
         authInterceptor,
-        securityHeadersInterceptor
+        securityHeadersInterceptor,
       ])
     )
   ]

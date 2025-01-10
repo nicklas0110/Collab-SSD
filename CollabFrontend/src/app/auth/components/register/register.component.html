@@ -62,6 +62,8 @@
           }
         </mat-form-field>
 
+        <app-captcha (verified)="onCaptchaVerified($event)"></app-captcha>
+
         @if (errorMessage) {
           <mat-error class="error-message">{{ errorMessage }}</mat-error>
         }
@@ -73,7 +75,7 @@
           <button mat-raised-button 
                   color="primary" 
                   type="submit"
-                  [disabled]="!registerForm.valid || isLoading">
+                  [disabled]="!registerForm.valid || isLoading || !captchaToken">
             {{ isLoading ? 'Registering...' : 'Register' }}
           </button>
         </div>

@@ -8,6 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { ValidatorService } from '../../../shared/services/validator.service';
+import { RateLimitService } from '../../../core/services/rate-limit.service';
+import { CaptchaComponent } from '../../../shared/components/captcha/captcha.component';
 
 @Component({
   selector: 'app-register',
@@ -19,7 +21,8 @@ import { ValidatorService } from '../../../shared/services/validator.service';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    CaptchaComponent
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
@@ -28,12 +31,14 @@ export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = false;
   errorMessage = '';
+  captchaToken: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService,
-    private validatorService: ValidatorService
+    private validatorService: ValidatorService,
+    private rateLimitService: RateLimitService
   ) {
     this.registerForm = this.fb.group({
       firstName: ['', [
@@ -72,7 +77,26 @@ export class RegisterComponent {
       ? null : { mismatch: true };
   }
 
+  onCaptchaVerified(token: string) {
+    this.captchaToken = token;
+  }
+
   onSubmit() {
+    if (!this.rateLimitService.checkRateLimit('register')) {
+      const lockoutTime = this.rateLimitService.getLockoutTime('register');
+      if (lockoutTime) {
+        this.errorMessage = `Too many attempts. Please try again after ${lockoutTime.toLocaleTimeString()}`;
+      } else {
+        this.errorMessage = `Too many attempts. Please try again later.`;
+      }
+      return;
+    }
+
+    if (!this.captchaToken) {
+      this.errorMessage = 'Please complete the CAPTCHA';
+      return;
+    }
+
     if (this.registerForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
