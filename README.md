@@ -78,6 +78,9 @@ Access the Swagger documentation at https://localhost:7086/swagger when the back
 Structured logging is implemented using Serilog and Seq:
 - Console logging for development
 - Seq dashboard available at http://localhost:5341
+- Need to download docker container
+### Start Seq logging container
+docker run -d --name seq -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
 
 ## Configuration
 
@@ -107,5 +110,10 @@ json
 ### Frontend Structure
 - `src/app/auth`: Authentication components
 - `src/app/messages`: Messaging features
+- `src/app/admin`: Admin features
+- `src/app/dashboard`: Dashboard features
+- `src/app/profile`: Profile features
 - `src/app/collaboration`: Collaboration features
+
 - `src/app/shared`: Shared components and services
+- `src/app/core`: Core components and services
