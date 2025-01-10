@@ -34,6 +34,7 @@ cd collab/CollabBackend
 bash dotnet restore
 
 3. Update database:
+mkdir Data
 dotnet ef database update
 
 4. Start Seq logging (optional):
