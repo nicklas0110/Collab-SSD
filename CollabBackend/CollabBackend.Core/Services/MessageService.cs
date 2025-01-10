@@ -69,11 +69,11 @@ public class MessageService : IMessageService
         var recipientPublicKey = recipient.PublicKey ?? throw new InvalidOperationException("Recipient public key not found");
 
         // 2. Encrypt sensitive parts with recipient's public key
-        var sensitiveContent = ExtractSensitiveContent(sanitizedContent); // You'll need to implement this
+        var sensitiveContent = ExtractSensitiveContent(sanitizedContent);
         var encryptedSensitiveContent = _asymmetricService.EncryptWithPublicKey(sensitiveContent, recipientPublicKey);
         
         // 3. Replace sensitive content with encrypted version
-        var finalContent = ReplaceSensitiveContent(sanitizedContent, encryptedSensitiveContent); // You'll need to implement this
+        var finalContent = ReplaceSensitiveContent(sanitizedContent, encryptedSensitiveContent);
         
         // 4. Encrypt entire message with symmetric encryption
         var encryptedContent = _cryptoService.EncryptSensitiveData(finalContent);

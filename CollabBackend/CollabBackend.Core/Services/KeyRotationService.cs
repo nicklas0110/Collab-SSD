@@ -23,42 +23,7 @@ public class KeyRotationService
         if (oldKey2 != null) _keyVersions["old2"] = oldKey2;
     }
 
-    public string GetCurrentKey() => _keyVersions["current"];
-
-    public bool TryDecryptWithAllKeys(string encryptedData, out string decryptedData)
-    {
-        decryptedData = string.Empty;
-        foreach (var key in _keyVersions.Values)
-        {
-            try
-            {
-                using var aes = Aes.Create();
-                var salt = new byte[16];
-                var iv = new byte[16];
-                var fullCipher = Convert.FromBase64String(encryptedData);
-                
-                Array.Copy(fullCipher, 0, salt, 0, 16);
-                Array.Copy(fullCipher, 16, iv, 0, 16);
-
-                var keyBytes = new Rfc2898DeriveBytes(key, salt, 10000, HashAlgorithmName.SHA256);
-                aes.Key = keyBytes.GetBytes(32);
-                aes.IV = iv;
-
-                using var decryptor = aes.CreateDecryptor();
-                using var msDecrypt = new MemoryStream(fullCipher, 32, fullCipher.Length - 32);
-                using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-                using var srDecrypt = new StreamReader(csDecrypt);
-                
-                decryptedData = srDecrypt.ReadToEnd();
-                return true;
-            }
-            catch
-            {
-                continue;
-            }
-        }
-        return false;
-    }
+    
 
     public async Task RotateKeysAsync()
     {
