@@ -107,4 +107,13 @@ public class CollaborationRepository : ICollaborationRepository
             }
         }
     }
+
+    public async Task<IEnumerable<User>> GetParticipantsAsync(Guid collaborationId)
+    {
+        var collaboration = await _context.Collaborations
+            .Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == collaborationId);
+        
+        return collaboration?.Participants ?? new List<User>();
+    }
 } 

@@ -47,7 +47,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("CollabBackend.Api")));
+        b => b.MigrationsAssembly("CollabBackend.Api")
+    )
+);
 
 // Add Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -73,6 +75,11 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<CryptoService>();
+builder.Services.AddScoped<MacService>();
+builder.Services.AddScoped<KeyRotationService>();
+builder.Services.AddScoped<IAsymmetricCryptoService, AsymmetricCryptoService>();
+builder.Services.AddScoped<DigitalSignatureService>();
+builder.Services.AddHostedService<KeyRotationBackgroundService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 
 // Add logging
@@ -113,7 +120,8 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
-        await DbSeeder.SeedData(context);
+        var asymmetricService = services.GetRequiredService<IAsymmetricCryptoService>();
+        await DbSeeder.SeedDataAsync(context, asymmetricService);
     }
     catch (Exception ex)
     {

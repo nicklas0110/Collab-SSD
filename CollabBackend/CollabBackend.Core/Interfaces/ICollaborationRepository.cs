@@ -16,4 +16,5 @@ public interface ICollaborationRepository
     Task<bool> IsUserParticipantAsync(Guid collaborationId, Guid userId);
     Task AddParticipantAsync(Guid collaborationId, Guid userId);
     Task RemoveParticipantAsync(Guid collaborationId, Guid userId);
+    Task<IEnumerable<User>> GetParticipantsAsync(Guid collaborationId);
 }

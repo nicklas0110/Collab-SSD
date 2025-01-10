@@ -13,4 +13,6 @@ public class Message
     public User Sender { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string Mac { get; set; } = string.Empty;
+    public string Signature { get; set; } = string.Empty;
 } 

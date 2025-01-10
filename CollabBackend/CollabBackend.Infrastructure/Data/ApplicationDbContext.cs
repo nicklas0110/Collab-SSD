@@ -18,39 +18,31 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // User configuration
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Email).IsRequired();
-            entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.PasswordHash).IsRequired();
-        });
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
 
-        // Collaboration configuration
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Collaborations)
+            .WithMany(c => c.Participants)
+            .UsingEntity(j => j.ToTable("CollaborationParticipants"));
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany(u => u.Messages)
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Collaboration)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.CollaborationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Collaboration>()
             .HasOne(c => c.CreatedBy)
             .WithMany()
-            .HasForeignKey(c => c.CreatedById);
-
-        modelBuilder.Entity<Collaboration>()
-            .HasMany(c => c.Participants)
-            .WithMany()
-            .UsingEntity(j => j.ToTable("CollaborationParticipants"));
-
-        // Message configuration
-        modelBuilder.Entity<Message>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Content).IsRequired();
-            entity.HasOne(m => m.Sender)
-                .WithMany()
-                .HasForeignKey(m => m.SenderId)
-                .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(m => m.Collaboration)
-                .WithMany()
-                .HasForeignKey(m => m.CollaborationId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
+            .HasForeignKey(c => c.CreatedById)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 } 

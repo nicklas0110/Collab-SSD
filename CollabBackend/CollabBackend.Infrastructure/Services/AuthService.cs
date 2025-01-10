@@ -13,11 +13,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly IAsymmetricCryptoService _asymmetricService;
 
-    public AuthService(IUserRepository userRepository, IConfiguration configuration)
+    public AuthService(IUserRepository userRepository, IConfiguration configuration, IAsymmetricCryptoService asymmetricService)
     {
         _userRepository = userRepository;
         _configuration = configuration;
+        _asymmetricService = asymmetricService;
     }
 
     public async Task<(User user, string token)> LoginAsync(string email, string password)
@@ -49,6 +51,9 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Email already registered");
         }
 
+        // Generate key pair for the new user
+        var (publicKey, privateKey) = _asymmetricService.GenerateKeyPair();
+
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -56,6 +61,9 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             FirstName = firstName,
             LastName = lastName,
+            Role = "user",
+            PublicKey = publicKey,
+            PrivateKey = privateKey,  // In production, this should be encrypted before storage
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
