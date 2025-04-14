@@ -7,6 +7,7 @@ import { CollaborationListComponent } from './collaboration/components/collabora
 import { authGuard } from './auth/guards/auth.guard';
 import { RegisterComponent } from './auth/components/register/register.component';
 import { adminGuard } from './core/guards/admin.guard';
+import { PucsComponent } from './pucs/pucs.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [authGuard] },
@@ -15,6 +16,7 @@ export const routes: Routes = [
   { path: 'profile', component: ProfileDetailsComponent, canActivate: [authGuard] },
   { path: 'messages', component: MessageListComponent, canActivate: [authGuard] },
   { path: 'collaborations', component: CollaborationListComponent, canActivate: [authGuard] },
+  { path: 'pucs', component: PucsComponent, canActivate: [authGuard] },
   {
     path: 'admin',
     loadComponent: () => 

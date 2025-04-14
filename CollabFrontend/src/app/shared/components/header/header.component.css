@@ -48,3 +48,10 @@ mat-icon {
 button {
   margin-left: 8px;
 }
+
+.pucs-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
