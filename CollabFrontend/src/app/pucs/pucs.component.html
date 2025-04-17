@@ -9,11 +9,18 @@
               (click)="isLoadoutComplete() ? startGame() : handleStartButtonClick()"
               [disabled]="!isLoadoutComplete()"
               [title]="getStartButtonTooltip()">
-        Start Game
+        Free Play
+      </button>
+      <button mat-raised-button color="accent" (click)="openMap()">
+        Story Mode
       </button>
       <button mat-raised-button color="accent" (click)="openLoadout()">
         Loadout
       </button>
+      <button mat-raised-button color="accent" (click)="openLeaderboards()">
+        Leaderboards
+      </button>
+      
       <div class="selected-loadout">
         <div class="loadout-item">
           <h4>Leader:</h4>
@@ -203,6 +210,75 @@
       </div>
       <button mat-raised-button color="primary" (click)="confirmLoadout()">
         Confirm Loadout
+      </button>
+    </div>
+  }
+  @if (showEndScreen) {
+    <div class="end-screen">
+      <h2>Game Over!</h2>
+      <div class="end-score-container">
+        <div class="end-score">
+          <h3>Final Score</h3>
+          <p class="score-value">{{ score }}</p>
+        </div>
+        <div class="high-score" *ngIf="isHighScore">
+          <h3>New High Score!</h3>
+          <div class="name-input">
+            <input type="text" placeholder="Enter your name" [(ngModel)]="playerName" maxlength="15">
+            <button (click)="saveHighScore()">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="end-buttons">
+        <button mat-raised-button color="primary" (click)="restartGame()">
+          Play Again
+        </button>
+        <button mat-raised-button color="accent" (click)="goToMainMenu()">
+          Main Menu
+        </button>
+      </div>
+    </div>
+  }
+  @if (showLeaderboardsScreen) {
+    <div class="leaderboards-screen">
+      <h2>Leaderboards</h2>
+      <div class="leaderboards-content">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (score of highScores; track score.name; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td>{{ score.name }}</td>
+                <td>{{ score.score }}</td>
+                <td>{{ score.date }}</td>
+              </tr>
+            }
+            @if (highScores.length === 0) {
+              <tr>
+                <td colspan="4" class="no-scores">No high scores yet!</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <button mat-raised-button color="primary" (click)="closeLeaderboards()">
+        Close
+      </button>
+    </div>
+  }
+  @if (showMapScreen) {
+    <div class="map-screen">
+      <app-pucs-map></app-pucs-map>
+      <button mat-raised-button color="primary" (click)="closeMap()">
+        Back to Menu
       </button>
     </div>
   }

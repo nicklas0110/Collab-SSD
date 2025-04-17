@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { PucsMapComponent } from './pucs.map.component';
 
 interface Puc {
   x: number;
@@ -42,7 +44,7 @@ interface Star {
   templateUrl: './pucs.component.html',
   styleUrls: ['./pucs.component.scss'],
   standalone: true,
-  imports: [FormsModule]
+  imports: [FormsModule, CommonModule, PucsMapComponent]
 })
 export class PucsComponent implements OnInit, AfterViewInit {
   @ViewChild('gameCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -65,7 +67,7 @@ export class PucsComponent implements OnInit, AfterViewInit {
   private isMouseDown: boolean = false;
   
   // Game state
-  private score: number = 0;
+  public score: number = 0;
   private timeLeft: number = 120;
   private feverMode: boolean = false;
   private feverGauge: number = 0;
@@ -129,6 +131,12 @@ export class PucsComponent implements OnInit, AfterViewInit {
 
   gameStarted: boolean = false;
   showLoadoutScreen: boolean = false;
+  showLeaderboardsScreen: boolean = false;
+  showEndScreen: boolean = false;
+  showMapScreen: boolean = false;
+  isHighScore: boolean = false;
+  playerName: string = '';
+  highScores: {name: string, score: number, date: string}[] = [];
   selectedScreens: { [key: string]: string } = {
     'Leader Puc': '',
     'Ability 1': '',
@@ -155,6 +163,12 @@ export class PucsComponent implements OnInit, AfterViewInit {
   private readonly STAR_MAX_SIZE = 5;
   private readonly STAR_MIN_SPEED = 0.5;
   private readonly STAR_MAX_SPEED = 2;
+
+  // Map mode properties
+  public isMapMode: boolean = false;
+  public mapTargetScore: number = 10000; // Example target score
+  public mapStars: number = 0; // 0-3 stars based on progress
+  private readonly STAR_THRESHOLDS = [0.3, 0.6, 1.0]; // 30%, 60%, 100% for 1, 2, 3 stars
 
   constructor() {
     // Load puc images with correct filenames
@@ -293,7 +307,7 @@ export class PucsComponent implements OnInit, AfterViewInit {
     // Check if pause button was clicked
     const pauseButtonSize = 30;
     const pauseButtonX = this.CANVAS_WIDTH - pauseButtonSize - 20;
-    const pauseButtonY = 20 + this.HEADER_OFFSET;
+    const pauseButtonY = this.isMapMode ? 90 + this.HEADER_OFFSET : 20 + this.HEADER_OFFSET;
     
     if (x >= pauseButtonX && x <= pauseButtonX + pauseButtonSize &&
         y >= pauseButtonY && y <= pauseButtonY + pauseButtonSize) {
@@ -732,12 +746,75 @@ export class PucsComponent implements OnInit, AfterViewInit {
       this.animationId = 0;
     }
 
-    // Show game over message with final score
-    alert(`Game Over! Final Score: ${this.score}`);
+    // Check if current score is a high score
+    this.checkHighScore();
+    
+    // Show end screen instead of alert
+    this.showEndScreen = true;
+    this.gameStarted = false;
+  }
 
-    // Optional: Reset game state if you want to allow restart
+  private checkHighScore(): void {
+    // Load high scores from local storage
+    this.loadHighScores();
+    
+    // Check if the current score is higher than any existing high score
+    // or if there are fewer than 5 high scores
+    if (this.highScores.length < 5 || this.score > this.highScores[this.highScores.length - 1].score) {
+      this.isHighScore = true;
+    }
+  }
+
+  private loadHighScores(): void {
+    const savedScores = localStorage.getItem('pucpucHighScores');
+    if (savedScores) {
+      this.highScores = JSON.parse(savedScores);
+      // Sort high scores in descending order
+      this.highScores.sort((a, b) => b.score - a.score);
+    } else {
+      this.highScores = [];
+    }
+  }
+
+  saveHighScore(): void {
+    if (!this.playerName.trim()) {
+      // Don't save if name is empty
+      return;
+    }
+    
+    // Add new high score
+    const newScore = {
+      name: this.playerName.trim(),
+      score: this.score,
+      date: new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
+    };
+    
+    this.highScores.push(newScore);
+    
+    // Sort and limit to top 5 scores
+    this.highScores.sort((a, b) => b.score - a.score);
+    if (this.highScores.length > 5) {
+      this.highScores = this.highScores.slice(0, 5);
+    }
+    
+    // Save to local storage
+    localStorage.setItem('pucpucHighScores', JSON.stringify(this.highScores));
+    
+    // Hide high score input
+    this.isHighScore = false;
+  }
+
+  restartGame(): void {
+    this.showEndScreen = false;
     this.initializeGame();
+    this.gameStarted = true;
     this.startGameLoop();
+    this.startTimer();
+  }
+
+  goToMainMenu(): void {
+    this.showEndScreen = false;
+    // Reset any game state as needed
   }
 
   private isWithinPlayArea(x: number, y: number, centerX: number, centerY: number): boolean {
@@ -1085,6 +1162,60 @@ export class PucsComponent implements OnInit, AfterViewInit {
     this.ctx.textAlign = 'center';
     this.ctx.fillText(timeString, this.CANVAS_WIDTH / 2, 40 + this.HEADER_OFFSET);
 
+    // Draw map mode target and progress if in map mode
+    if (this.isMapMode) {
+      // Draw target score
+      this.ctx.font = 'bold 20px Arial';
+      this.ctx.fillStyle = '#FF6B6B';
+      this.ctx.textAlign = 'right';
+      this.ctx.fillText(`Target: ${this.mapTargetScore}`, this.CANVAS_WIDTH - 20, 40 + this.HEADER_OFFSET);
+
+      // Draw progress bar
+      const progress = Math.min(1, this.score / this.mapTargetScore);
+      const barWidth = 200;
+      const barHeight = 15;
+      const barX = this.CANVAS_WIDTH - barWidth - 20;
+      const barY = 50 + this.HEADER_OFFSET;
+
+      // Background
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+      // Progress
+      this.ctx.fillStyle = '#FF6B6B';
+      this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+
+      // Star indicators
+      const starSize = 15;
+      const starSpacing = 5;
+      const totalStarsWidth = (starSize * 3) + (starSpacing * 2);
+      const starsStartX = barX + (barWidth - totalStarsWidth) / 2;
+
+      for (let i = 0; i < 3; i++) {
+        const starX = starsStartX + (i * (starSize + starSpacing));
+        const starY = barY + barHeight + 10;
+        
+        // Draw star outline
+        this.ctx.beginPath();
+        this.ctx.moveTo(starX + starSize/2, starY);
+        for (let j = 0; j < 5; j++) {
+          const angle = (j * 4 * Math.PI / 5) - Math.PI / 2;
+          const radius = j % 2 === 0 ? starSize/2 : starSize/4;
+          this.ctx.lineTo(starX + starSize/2 + Math.cos(angle) * radius, 
+                         starY + Math.sin(angle) * radius);
+        }
+        this.ctx.closePath();
+        
+        // Fill star if threshold reached
+        if (progress >= this.STAR_THRESHOLDS[i]) {
+          this.ctx.fillStyle = '#FFD700';
+          this.ctx.fill();
+        }
+        this.ctx.strokeStyle = '#FFD700';
+        this.ctx.stroke();
+      }
+    }
+
     // Draw fever score if in fever mode
     if (this.feverMode) {
       this.ctx.font = 'bold 24px Arial';
@@ -1094,10 +1225,10 @@ export class PucsComponent implements OnInit, AfterViewInit {
       this.ctx.fillText(`Fever: ${feverScore}`, this.CANVAS_WIDTH / 2, 80 + this.HEADER_OFFSET);
     }
 
-    // Draw pause button
+    // Draw pause button (moved down if in map mode)
     const pauseButtonSize = 30;
     const pauseButtonX = this.CANVAS_WIDTH - pauseButtonSize - 20;
-    const pauseButtonY = 20 + this.HEADER_OFFSET;
+    const pauseButtonY = this.isMapMode ? 90 + this.HEADER_OFFSET : 20 + this.HEADER_OFFSET;
     
     // Draw button background
     this.ctx.fillStyle = this.isPaused ? 'rgba(255, 107, 107, 0.7)' : 'rgba(255, 255, 255, 0.7)';
@@ -1442,6 +1573,90 @@ export class PucsComponent implements OnInit, AfterViewInit {
     this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
     this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
     this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+    
+    // Add touch event listeners
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+
+      // Check if pause button was clicked
+      const pauseButtonSize = 30;
+      const pauseButtonX = this.CANVAS_WIDTH - pauseButtonSize - 20;
+      const pauseButtonY = this.isMapMode ? 90 + this.HEADER_OFFSET : 20 + this.HEADER_OFFSET;
+      
+      if (x >= pauseButtonX && x <= pauseButtonX + pauseButtonSize &&
+          y >= pauseButtonY && y <= pauseButtonY + pauseButtonSize) {
+        this.togglePause();
+        return;
+      }
+
+      if (this.isPaused) return; // Don't handle other touch events when paused
+      
+      this.isMouseDown = true;
+      this.mouseX = x;
+      this.mouseY = y;
+      const clickedPuc = this.findPucAtPosition(x, y);
+      if (clickedPuc) {
+        this.startChain(clickedPuc);
+      }
+    });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.isMouseDown = false;
+      if (this.selectedPucs.length > 0) {
+        this.removeSelectedPucs();
+      }
+    });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!this.isMouseDown || this.selectedPucs.length === 0) return;
+      
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      this.mouseX = x;
+      this.mouseY = y;
+      
+      const hoveredPuc = this.findPucAtPosition(x, y);
+      if (hoveredPuc && !hoveredPuc.selected) {
+        const lastPuc = this.selectedPucs[this.selectedPucs.length - 1];
+        if (hoveredPuc.type === lastPuc.type && this.areAdjacent(lastPuc, hoveredPuc)) {
+          this.addToChain(hoveredPuc);
+        }
+      }
+    });
+  }
+
+  private handleTouchStart(event: TouchEvent): void {
+    const touch = event.touches[0];
+    const { x, y } = this.getTouchPosition(touch);
+    this.handleMouseDown(new MouseEvent('mousedown', { clientX: x, clientY: y }));
+  }
+
+  private handleTouchEnd(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+    const { x, y } = this.getTouchPosition(touch);
+    this.handleMouseUp(new MouseEvent('mouseup', { clientX: x, clientY: y }));
+  }
+
+  private handleTouchMove(event: TouchEvent): void {
+    const touch = event.touches[0];
+    const { x, y } = this.getTouchPosition(touch);
+    this.handleMouseMove(new MouseEvent('mousemove', { clientX: x, clientY: y }));
+  }
+
+  private getTouchPosition(touch: Touch): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
   }
 
   private loadImages(): void {
@@ -1600,5 +1815,22 @@ export class PucsComponent implements OnInit, AfterViewInit {
       const pauseDuration = Date.now() - this.lastPauseTime;
       this.lastUpdateTime += pauseDuration;
     }
+  }
+
+  openLeaderboards(): void {
+    this.loadHighScores();
+    this.showLeaderboardsScreen = true;
+  }
+
+  closeLeaderboards(): void {
+    this.showLeaderboardsScreen = false;
+  }
+
+  openMap(): void {
+    this.showMapScreen = true;
+  }
+
+  closeMap(): void {
+    this.showMapScreen = false;
   }
 }
