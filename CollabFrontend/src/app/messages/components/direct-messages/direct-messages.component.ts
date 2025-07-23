@@ -10,7 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BehaviorSubject, Subject, debounceTime, takeUntil, switchMap, distinctUntilChanged } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { MessageService } from '../../services/message.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SignalRService } from '../../../shared/services/signalr.service';
@@ -44,11 +44,11 @@ import { MessageItemComponent } from '../message-item/message-item.component';
           </mat-card-header>
           <mat-card-content>
             <!-- Search users -->
-            <mat-form-field class="search-field" appearance="outline">
-              <mat-label>Search users</mat-label>
-              <input matInput [(ngModel)]="searchQuery" placeholder="Type to search users...">
-              <mat-icon matSuffix>search</mat-icon>
-            </mat-form-field>
+                         <mat-form-field class="search-field" appearance="outline">
+               <mat-label>Search users</mat-label>
+               <input matInput [(ngModel)]="searchQuery" placeholder="Type to search users..." (input)="onSearchInput()">
+               <mat-icon matSuffix>search</mat-icon>
+             </mat-form-field>
 
             <!-- Conversation list -->
             <mat-nav-list class="conversation-list">
@@ -164,13 +164,15 @@ import { MessageItemComponent } from '../message-item/message-item.component';
                 <!-- Messages list -->
                 <div class="messages-list" #messagesList>
                   @for (message of messages$ | async; track message.id) {
-                    <app-message-item
-                      [message]="message"
-                      [currentUser]="currentUser$ | async"
-                      (replyToMessage)="setReplyMessage($event)"
-                      (forwardMessage)="forwardMessage($event)"
-                      (deleteMessage)="deleteMessage($event)">
-                    </app-message-item>
+                                         @if (currentUser$ | async; as currentUser) {
+                       <app-message-item
+                         [message]="message"
+                         [currentUser]="currentUser"
+                         (replyToMessage)="setReplyMessage($event)"
+                         (forwardMessage)="forwardMessage($event)"
+                         (deleteMessage)="deleteMessage($event)">
+                       </app-message-item>
+                     }
                   } @empty {
                     <div class="empty-messages">
                       <mat-icon>chat_bubble_outline</mat-icon>

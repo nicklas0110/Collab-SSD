@@ -35,15 +35,17 @@
           }
 
           <div class="message-list">
-            @for (message of messages$ | async; track message.id) {
-              <app-message-item
-                [message]="message"
-                [currentUser]="currentUser$ | async"
-                (replyToMessage)="setReplyMessage($event)"
-                (forwardMessage)="forwardMessage($event)"
-                (deleteMessage)="deleteMessage($event)">
-              </app-message-item>
-            } @empty {
+                          @for (message of messages$ | async; track message.id) {
+                @if (currentUser$ | async; as currentUser) {
+                  <app-message-item
+                    [message]="message"
+                    [currentUser]="currentUser"
+                    (replyToMessage)="setReplyMessage($event)"
+                    (forwardMessage)="forwardMessage($event)"
+                    (deleteMessage)="deleteMessage($event)">
+                  </app-message-item>
+                }
+              } @empty {
               <div class="empty-state">
                 <mat-icon>message</mat-icon>
                 <p>No messages in this collaboration yet</p>

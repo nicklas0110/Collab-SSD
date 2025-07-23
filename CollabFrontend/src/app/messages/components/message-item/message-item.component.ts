@@ -162,11 +162,11 @@ import { EmojiPickerComponent } from '../emoji-picker/emoji-picker.component';
         <!-- Avatar for own messages -->
         @if (isOwnMessage) {
           <div class="avatar">
-            @if (currentUser?.profilePictureUrl) {
-              <img [src]="currentUser.profilePictureUrl" [alt]="currentUser.firstName" class="avatar-img">
-            } @else {
-              <div class="avatar-placeholder">{{ getInitials(currentUser!) }}</div>
-            }
+                         @if (currentUser && currentUser.profilePictureUrl) {
+               <img [src]="currentUser.profilePictureUrl" [alt]="currentUser.firstName" class="avatar-img">
+             } @else if (currentUser) {
+               <div class="avatar-placeholder">{{ getInitials(currentUser) }}</div>
+             }
           </div>
         }
       </div>
@@ -251,7 +251,7 @@ export class MessageItemComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  getGroupedReactions() {
+  getGroupedReactions(): Array<{emoji: string, count: number, users: User[]}> {
     if (!this.message.reactions) return [];
     
     const grouped = this.message.reactions.reduce((acc, reaction) => {
@@ -265,7 +265,7 @@ export class MessageItemComponent implements OnInit {
       acc[reaction.emoji].count++;
       acc[reaction.emoji].users.push(reaction.user);
       return acc;
-    }, {} as any);
+    }, {} as Record<string, {emoji: string, count: number, users: User[]}>);
 
     return Object.values(grouped);
   }
@@ -274,7 +274,7 @@ export class MessageItemComponent implements OnInit {
     return this.message.reactions?.some(r => r.emoji === emoji && r.userId === this.currentUser?.id) || false;
   }
 
-  getReactionTooltip(reaction: any): string {
+  getReactionTooltip(reaction: {emoji: string, count: number, users: User[]}): string {
     const users = reaction.users.map((u: User) => `${u.firstName} ${u.lastName}`);
     return users.join(', ');
   }
