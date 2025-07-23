@@ -3,6 +3,7 @@ import { LoginComponent } from './auth/components/login/login.component';
 import { DashboardComponent } from './dashboard/components/dashboard/dashboard.component';
 import { ProfileDetailsComponent } from './profile/components/profile-details/profile-details.component';
 import { MessageListComponent } from './messages/components/message-list/message-list.component';
+import { DirectMessagesComponent } from './messages/components/direct-messages/direct-messages.component';
 import { CollaborationListComponent } from './collaboration/components/collaboration-list/collaboration-list.component';
 import { authGuard } from './auth/guards/auth.guard';
 import { RegisterComponent } from './auth/components/register/register.component';
@@ -14,6 +15,7 @@ export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileDetailsComponent, canActivate: [authGuard] },
   { path: 'messages', component: MessageListComponent, canActivate: [authGuard] },
+  { path: 'direct-messages', component: DirectMessagesComponent, canActivate: [authGuard] },
   { path: 'collaborations', component: CollaborationListComponent, canActivate: [authGuard] },
   {
     path: 'admin',

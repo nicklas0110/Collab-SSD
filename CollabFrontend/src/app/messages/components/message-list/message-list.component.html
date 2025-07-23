@@ -26,25 +26,23 @@
           <mat-card-title>{{ selectedCollaboration.title }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
+          <!-- Typing indicator -->
+          @if (typingUsers.length > 0) {
+            <div class="typing-indicator">
+              <mat-icon class="typing-icon">edit</mat-icon>
+              <span>{{ getTypingText() }}</span>
+            </div>
+          }
+
           <div class="message-list">
             @for (message of messages$ | async; track message.id) {
-              <div class="message-wrapper" [class.own-message]="message.senderId === (currentUser$ | async)?.id">
-                <div class="message" [class.unread]="!message.read">
-                  <div class="message-content">
-                    <div class="message-header">
-                      <span class="sender-name">{{ message.sender.firstName }} {{ message.sender.lastName }}</span>
-                      <span class="message-time">
-                        {{ message.createdAt | date:'short' }}
-                        <mat-icon class="read-status" [class.read]="message.read">
-                          {{ message.read ? 'done_all' : 'done' }}
-                        </mat-icon>
-                      </span>
-                    </div>
-                    <p class="message-text">{{ message.content }}</p>
-                  </div>
-                </div>
-              </div>
-              <mat-divider></mat-divider>
+              <app-message-item
+                [message]="message"
+                [currentUser]="currentUser$ | async"
+                (replyToMessage)="setReplyMessage($event)"
+                (forwardMessage)="forwardMessage($event)"
+                (deleteMessage)="deleteMessage($event)">
+              </app-message-item>
             } @empty {
               <div class="empty-state">
                 <mat-icon>message</mat-icon>
@@ -53,22 +51,62 @@
             }
           </div>
         </mat-card-content>
-        <mat-card-actions>
-          <mat-form-field class="message-input">
-            <input matInput 
-                   [(ngModel)]="newMessage" 
-                   placeholder="Type a message..."
-                   maxlength="5000"
-                   #messageInput="ngModel"
-                   (keyup.enter)="sendMessage()">
-            <mat-hint align="end">{{(newMessage || '').length}}/5000</mat-hint>
-            <mat-error *ngIf="messageInput.errors?.['maxlength']">
-              Message cannot exceed 5000 characters
-            </mat-error>
-          </mat-form-field>
-          <button mat-icon-button color="primary" (click)="sendMessage()">
-            <mat-icon>send</mat-icon>
-          </button>
+        <mat-card-actions class="message-input-area">
+          <!-- Reply indicator -->
+          @if (replyToMessage) {
+            <div class="reply-indicator">
+              <mat-icon>reply</mat-icon>
+              <span>Replying to: {{ getPreviewText(replyToMessage.content) }}</span>
+              <button mat-icon-button (click)="cancelReply()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+
+          <!-- File upload area -->
+          @if (selectedFile) {
+            <div class="file-preview">
+              <mat-icon>attach_file</mat-icon>
+              <span>{{ selectedFile.name }}</span>
+              <button mat-icon-button (click)="removeFile()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+
+          <div class="input-row">
+            <button mat-icon-button (click)="fileInput.click()" matTooltip="Attach file">
+              <mat-icon>attach_file</mat-icon>
+            </button>
+
+            <mat-form-field class="message-input">
+              <input matInput 
+                     [(ngModel)]="newMessage" 
+                     placeholder="Type a message..."
+                     maxlength="5000"
+                     #messageInput="ngModel"
+                     (keyup.enter)="sendMessage()"
+                     (input)="onTyping()">
+              <mat-hint align="end">{{(newMessage || '').length}}/5000</mat-hint>
+              <mat-error *ngIf="messageInput.errors?.['maxlength']">
+                Message cannot exceed 5000 characters
+              </mat-error>
+            </mat-form-field>
+
+            <button mat-fab 
+                    color="primary" 
+                    (click)="sendMessage()"
+                    [disabled]="!canSend()"
+                    matTooltip="Send message">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+
+          <input #fileInput 
+                 type="file" 
+                 style="display: none" 
+                 (change)="onFileSelected($event)"
+                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt">
         </mat-card-actions>
       </mat-card>
     } @else {
