@@ -39,7 +39,7 @@ public class ChatHub : Hub
             await _userRepository.UpdateAsync(user);
 
             // Join user to their collaboration groups
-            var collaborations = await _collaborationRepository.GetByUserIdAsync(userId);
+            var collaborations = await _collaborationRepository.GetAllForUserAsync(userId);
             foreach (var collaboration in collaborations)
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"collaboration_{collaboration.Id}");

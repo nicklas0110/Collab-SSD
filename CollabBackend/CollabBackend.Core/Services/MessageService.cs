@@ -62,9 +62,9 @@ public class MessageService : IMessageService
         var sanitizedContent = ValidationService.SanitizeInput(dto.Content);
         
         // 1. Get recipient's public key
-        var collaboration = await _collaborationRepository.GetByIdAsync(dto.CollaborationId);
+        var collaboration = await _collaborationRepository.GetByIdAsync(dto.CollaborationId ?? Guid.Empty);
         // Get the other participant (not the sender)
-        var participants = await _collaborationRepository.GetParticipantsAsync(dto.CollaborationId);
+        var participants = await _collaborationRepository.GetParticipantsAsync(dto.CollaborationId ?? Guid.Empty);
         var recipient = participants.First(p => p.Id != senderId);
         var recipientPublicKey = recipient.PublicKey ?? throw new InvalidOperationException("Recipient public key not found");
 
@@ -93,7 +93,13 @@ public class MessageService : IMessageService
             Mac = mac,
             Signature = signature,
             SenderId = senderId,
-            CollaborationId = dto.CollaborationId,
+            CollaborationId = dto.CollaborationId ?? Guid.Empty,
+            RecipientId = dto.RecipientId,
+            MessageType = dto.MessageType,
+            FileUrl = dto.FileUrl,
+            FileName = dto.FileName,
+            FileSize = dto.FileSize,
+            ReplyToMessageId = dto.ReplyToMessageId,
             Read = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -116,9 +122,36 @@ public class MessageService : IMessageService
                 sender.UpdatedAt
             ),
             createdMessage.CollaborationId,
+            createdMessage.RecipientId,
             createdMessage.Read,
             createdMessage.CreatedAt,
-            createdMessage.UpdatedAt
+            createdMessage.UpdatedAt,
+            createdMessage.MessageType,
+            createdMessage.FileUrl,
+            createdMessage.FileName,
+            createdMessage.FileSize,
+            createdMessage.ReplyToMessageId,
+            null, // ReplyToMessage
+            createdMessage.IsEdited,
+            createdMessage.EditedAt,
+            createdMessage.IsDeleted,
+            createdMessage.DeliveryStatus,
+            createdMessage.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         );
     }
 
@@ -180,9 +213,36 @@ public class MessageService : IMessageService
                     m.Sender.UpdatedAt
                 ),
                 m.CollaborationId,
+                m.RecipientId,
                 m.Read,
                 m.CreatedAt,
-                m.UpdatedAt
+                m.UpdatedAt,
+                m.MessageType,
+                m.FileUrl,
+                m.FileName,
+                m.FileSize,
+                m.ReplyToMessageId,
+                null, // ReplyToMessage
+                m.IsEdited,
+                m.EditedAt,
+                m.IsDeleted,
+                m.DeliveryStatus,
+                m.Reactions?.Select(r => new MessageReactionDto(
+                    r.Id,
+                    r.MessageId,
+                    r.UserId,
+                    new UserDto(
+                        r.User.Id,
+                        r.User.Email,
+                        r.User.FirstName,
+                        r.User.LastName,
+                        r.User.Role,
+                        r.User.CreatedAt,
+                        r.User.UpdatedAt
+                    ),
+                    r.Emoji,
+                    r.CreatedAt
+                )).ToList()
             );
         });
     }
@@ -220,9 +280,36 @@ public class MessageService : IMessageService
                 m.Sender.UpdatedAt
             ),
             m.CollaborationId,
+            m.RecipientId,
             m.Read,
             m.CreatedAt,
-            m.UpdatedAt
+            m.UpdatedAt,
+            m.MessageType,
+            m.FileUrl,
+            m.FileName,
+            m.FileSize,
+            m.ReplyToMessageId,
+            null, // ReplyToMessage
+            m.IsEdited,
+            m.EditedAt,
+            m.IsDeleted,
+            m.DeliveryStatus,
+            m.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         ));
     }
 
@@ -243,9 +330,36 @@ public class MessageService : IMessageService
                 m.Sender.UpdatedAt
             ),
             m.CollaborationId,
+            m.RecipientId,
             m.Read,
             m.CreatedAt,
-            m.UpdatedAt
+            m.UpdatedAt,
+            m.MessageType,
+            m.FileUrl,
+            m.FileName,
+            m.FileSize,
+            m.ReplyToMessageId,
+            null, // ReplyToMessage
+            m.IsEdited,
+            m.EditedAt,
+            m.IsDeleted,
+            m.DeliveryStatus,
+            m.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         ));
     }
 
@@ -258,6 +372,8 @@ public class MessageService : IMessageService
         var sanitizedContent = ValidationService.SanitizeInput(dto.Content);
         message.Content = _cryptoService.EncryptSensitiveData(sanitizedContent);
         message.UpdatedAt = DateTime.UtcNow;
+        message.IsEdited = true;
+        message.EditedAt = DateTime.UtcNow;
 
         var updatedMessage = await _messageRepository.UpdateAsync(message);
         return new MessageDto(
@@ -274,9 +390,36 @@ public class MessageService : IMessageService
                 updatedMessage.Sender.UpdatedAt
             ),
             updatedMessage.CollaborationId,
+            updatedMessage.RecipientId,
             updatedMessage.Read,
             updatedMessage.CreatedAt,
-            updatedMessage.UpdatedAt
+            updatedMessage.UpdatedAt,
+            updatedMessage.MessageType,
+            updatedMessage.FileUrl,
+            updatedMessage.FileName,
+            updatedMessage.FileSize,
+            updatedMessage.ReplyToMessageId,
+            null, // ReplyToMessage
+            updatedMessage.IsEdited,
+            updatedMessage.EditedAt,
+            updatedMessage.IsDeleted,
+            updatedMessage.DeliveryStatus,
+            updatedMessage.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         );
     }
 } 
