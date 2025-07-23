@@ -58,9 +58,36 @@ public class MessagesController : ControllerBase
                 m.Sender.UpdatedAt
             ),
             m.CollaborationId,
+            m.RecipientId,
             m.Read,
             m.CreatedAt,
-            m.UpdatedAt
+            m.UpdatedAt,
+            m.MessageType,
+            m.FileUrl,
+            m.FileName,
+            m.FileSize,
+            m.ReplyToMessageId,
+            null, // ReplyToMessage
+            m.IsEdited,
+            m.EditedAt,
+            m.IsDeleted,
+            m.DeliveryStatus,
+            m.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         ));
         return Ok(dtos);
     }
@@ -89,9 +116,36 @@ public class MessagesController : ControllerBase
                     m.Sender.UpdatedAt
                 ),
                 m.CollaborationId,
+                m.RecipientId,
                 m.Read,
                 m.CreatedAt,
-                m.UpdatedAt
+                m.UpdatedAt,
+                m.MessageType,
+                m.FileUrl,
+                m.FileName,
+                m.FileSize,
+                m.ReplyToMessageId,
+                null, // ReplyToMessage
+                m.IsEdited,
+                m.EditedAt,
+                m.IsDeleted,
+                m.DeliveryStatus,
+                m.Reactions?.Select(r => new MessageReactionDto(
+                    r.Id,
+                    r.MessageId,
+                    r.UserId,
+                    new UserDto(
+                        r.User.Id,
+                        r.User.Email,
+                        r.User.FirstName,
+                        r.User.LastName,
+                        r.User.Role,
+                        r.User.CreatedAt,
+                        r.User.UpdatedAt
+                    ),
+                    r.Emoji,
+                    r.CreatedAt
+                )).ToList()
             )).ToList();
             
             return Ok(dtos);
@@ -121,9 +175,36 @@ public class MessagesController : ControllerBase
                 m.Sender.UpdatedAt
             ),
             m.CollaborationId,
+            m.RecipientId,
             m.Read,
             m.CreatedAt,
-            m.UpdatedAt
+            m.UpdatedAt,
+            m.MessageType,
+            m.FileUrl,
+            m.FileName,
+            m.FileSize,
+            m.ReplyToMessageId,
+            null, // ReplyToMessage
+            m.IsEdited,
+            m.EditedAt,
+            m.IsDeleted,
+            m.DeliveryStatus,
+            m.Reactions?.Select(r => new MessageReactionDto(
+                r.Id,
+                r.MessageId,
+                r.UserId,
+                new UserDto(
+                    r.User.Id,
+                    r.User.Email,
+                    r.User.FirstName,
+                    r.User.LastName,
+                    r.User.Role,
+                    r.User.CreatedAt,
+                    r.User.UpdatedAt
+                ),
+                r.Emoji,
+                r.CreatedAt
+            )).ToList()
         ));
         return Ok(dtos);
     }
@@ -152,7 +233,13 @@ public class MessagesController : ControllerBase
                 Id = Guid.NewGuid(),
                 Content = encryptedContent,
                 SenderId = userId,
-                CollaborationId = dto.CollaborationId,
+                CollaborationId = dto.CollaborationId ?? Guid.Empty,
+                RecipientId = dto.RecipientId,
+                MessageType = dto.MessageType,
+                FileUrl = dto.FileUrl,
+                FileName = dto.FileName,
+                FileSize = dto.FileSize,
+                ReplyToMessageId = dto.ReplyToMessageId,
                 Read = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -181,9 +268,36 @@ public class MessagesController : ControllerBase
                     user.UpdatedAt
                 ),
                 message.CollaborationId,
+                message.RecipientId,
                 message.Read,
                 message.CreatedAt,
-                message.UpdatedAt
+                message.UpdatedAt,
+                message.MessageType,
+                message.FileUrl,
+                message.FileName,
+                message.FileSize,
+                message.ReplyToMessageId,
+                null, // ReplyToMessage
+                message.IsEdited,
+                message.EditedAt,
+                message.IsDeleted,
+                message.DeliveryStatus,
+                message.Reactions?.Select(r => new MessageReactionDto(
+                    r.Id,
+                    r.MessageId,
+                    r.UserId,
+                    new UserDto(
+                        r.User.Id,
+                        r.User.Email,
+                        r.User.FirstName,
+                        r.User.LastName,
+                        r.User.Role,
+                        r.User.CreatedAt,
+                        r.User.UpdatedAt
+                    ),
+                    r.Emoji,
+                    r.CreatedAt
+                )).ToList()
             ));
         }
         catch (Exception ex)
@@ -237,9 +351,36 @@ public class MessagesController : ControllerBase
                     message.Sender.UpdatedAt
                 ),
                 message.CollaborationId,
+                message.RecipientId,
                 message.Read,
                 message.CreatedAt,
-                message.UpdatedAt
+                message.UpdatedAt,
+                message.MessageType,
+                message.FileUrl,
+                message.FileName,
+                message.FileSize,
+                message.ReplyToMessageId,
+                null, // ReplyToMessage
+                message.IsEdited,
+                message.EditedAt,
+                message.IsDeleted,
+                message.DeliveryStatus,
+                message.Reactions?.Select(r => new MessageReactionDto(
+                    r.Id,
+                    r.MessageId,
+                    r.UserId,
+                    new UserDto(
+                        r.User.Id,
+                        r.User.Email,
+                        r.User.FirstName,
+                        r.User.LastName,
+                        r.User.Role,
+                        r.User.CreatedAt,
+                        r.User.UpdatedAt
+                    ),
+                    r.Emoji,
+                    r.CreatedAt
+                )).ToList()
             ));
         }
         catch (Exception ex)
