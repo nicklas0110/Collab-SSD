@@ -240,7 +240,7 @@ export class MessageListComponent implements OnInit, OnDestroy {
   }
 
   canSend(): boolean {
-    return (this.newMessage.trim().length > 0 || this.selectedFile) && this.selectedCollaboration !== null;
+    return (this.newMessage.trim().length > 0 || !!this.selectedFile) && this.selectedCollaboration !== null;
   }
 
   private getFileMessageType(): MessageType {

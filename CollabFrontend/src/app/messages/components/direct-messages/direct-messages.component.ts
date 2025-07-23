@@ -342,25 +342,18 @@ export class DirectMessagesComponent implements OnInit, OnDestroy {
   }
 
   private setupSearch() {
-    // Implement search with debouncing
-    const searchSubject = new Subject<string>();
-    searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(query => {
-        if (query.trim().length > 0) {
-          return this.messageService.searchUsers(query);
-        } else {
-          return [];
-        }
-      }),
-      takeUntil(this.destroy$)
-    ).subscribe(results => {
-      this.searchResults$.next(results);
-    });
+    // This will be implemented when the search input is connected
+    // For now, we'll handle search directly in the template
+  }
 
-    // Connect search input to subject
-    // This would be connected in template with (input) event
+  onSearchInput() {
+    if (this.searchQuery.trim().length > 0) {
+      this.messageService.searchUsers(this.searchQuery).subscribe(results => {
+        this.searchResults$.next(results);
+      });
+    } else {
+      this.searchResults$.next([]);
+    }
   }
 
   loadConversations() {
@@ -481,7 +474,7 @@ export class DirectMessagesComponent implements OnInit, OnDestroy {
   }
 
   canSend(): boolean {
-    return (this.newMessage.trim().length > 0 || this.selectedFile) && this.selectedUser !== null;
+    return (this.newMessage.trim().length > 0 || !!this.selectedFile) && this.selectedUser !== null;
   }
 
   private getFileMessageType(): MessageType {

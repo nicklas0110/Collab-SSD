@@ -42,8 +42,11 @@ export class MessageService {
   }
 
   searchMessages(query: string, collaborationId?: string): Observable<Message[]> {
-    const params = collaborationId ? { collaborationId } : {};
-    return this.http.get<Message[]>(`messages/search/${encodeURIComponent(query)}`, { params });
+    let url = `messages/search/${encodeURIComponent(query)}`;
+    if (collaborationId) {
+      url += `?collaborationId=${collaborationId}`;
+    }
+    return this.http.get<Message[]>(url);
   }
 
   // Message reactions

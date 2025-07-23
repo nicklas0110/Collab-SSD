@@ -8,7 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chip';
+import { MatChipsModule } from '@angular/material/chips';
 import { Message, MessageReaction, CreateMessageReaction, User } from '../../interfaces/message.interface';
 import { MessageService } from '../../services/message.service';
 import { AuthService } from '../../../auth/services/auth.service';
